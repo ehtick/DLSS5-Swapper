@@ -90,16 +90,6 @@ function findSource() {
   return null;
 }
 
-function findAddon(dir) {
-  for (const candidate of [dir, path.join(dir, 'streamline')]) {
-    try {
-      const found = fs.readdirSync(candidate).find((f) => /\.addon64$/i.test(f));
-      if (found) return path.join(candidate, found);
-    } catch {}
-  }
-  return null;
-}
-
 // Only an "Addon" build can load the DLSS 5 add-on; pick the newest one.
 function findReShadeSetup() {
   const found = [];
@@ -248,12 +238,16 @@ for (const name of fs.readdirSync(source.dir)) {
 }
 if (overrides) console.log(`  (${overrides} override${overrides > 1 ? 's' : ''} from the source root)`);
 
-const addon = findAddon(source.dir);
+// The native route's consumer is the verified renodx-dlss5 build, by name. It
+// used to be "the first .addon64 beside the source", and once the multipass
+// consumer was placed there too it sorted first: 2.2.5 shipped it as the native
+// route's add-on, and every native install became a multipass one.
+const addon = findHostAddon(source.dir);
 if (!addon) {
-  console.error('لم يتم العثور على ملف .addon64 / add-on not found.');
+  console.error('لم يتم العثور على renodx-dlss5.addon64 الموثّق / verified renodx-dlss5.addon64 not found.');
   process.exit(1);
 }
-copyFile(addon, path.join(PAYLOAD, path.basename(addon)));
+copyFile(addon, path.join(PAYLOAD, 'renodx-dlss5.addon64'));
 
 // Preserve support for bundled optional builds, but never bring back the old
 // DX12/DX11/DX9 companion that duplicates the integrated routes.

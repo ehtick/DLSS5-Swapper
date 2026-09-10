@@ -44,70 +44,43 @@ Both are on the latest release page, with `SHA256SUMS.txt` beside them.
 - **Custom add-ons:** the Add-ons page remains available alongside the integrated installation routes.
 - **Multipass neural rendering:** an installation route that runs the neural pass up to ten times per frame, on DX12, DX11 and 64-bit DX9 - including games with no DLSS of their own.
 - **Community (BETA):** read what worked for other people on the games you own, leave your own report, and talk it over underneath it. Opt-in, and everything you leave can be edited, deleted or withdrawn.
+- **Community chat:** one live room for everyone using the app - screenshots, game cards, replies with mentions and reactions.
 
-## New in 2.2.5
+## New in 2.2.6
 
-A fourth installation route that runs the neural pass more than once per frame, and nine faults fixed at the cause.
+Community chat, and the fault 2.2.5 shipped in every native install - fixed at the cause.
 
-### ⭐ Multipass — the RenoDX DLSS Tool route
+### 💬 Community chat
 
-The neural pass has always run once. This route runs it **up to ten times**, each pass working on the output of the one before it, and it is the most-asked-for thing on the tracker ([#251](https://github.com/rakanki911/DLSS5-Swapper/issues/251)).
+One live room for everyone using the app, on its own page under **Games**.
 
-It is a route, not a switch. Pick it under **Installation route** and the app installs ShortFuse's DLSS Tool build in place of the ordinary neural consumer — the two cannot be loaded together, and choosing one route instead of the other is what keeps that honest, rather than a warning nobody reads.
+- **Screenshots in the conversation.** Paste, drop or pick up to four images. They are compressed on your machine before they leave it, and they expire after 24 hours. Tag one **DLSS 5 ON** or **DLSS 5 OFF** and a comparison reads without explaining it.
+- **Game cards.** Attach any game from the Community page: its result and its report count travel with the message, and a click opens its reports in place.
+- **Replies with mentions, reactions,** and your own messages to edit or delete. Any image can be saved to disk.
+- **Live.** New messages arrive while you read, an unread count waits on the sidebar while you are elsewhere, and a half-written message survives leaving the page.
 
-- **Games with no DLSS of their own are the point.** The tool hooks `Present` rather than riding on the game's own DLSS, so it reaches titles the native route never could.
-- **DirectX 12, DirectX 11 and 64-bit DirectX 9.** Not a guess: the add-on says so itself — *"Present supports D3D9, D3D11, and D3D12 presentation. D3D9 and D3D11 use a same-adapter, device-only D3D12 endpoint."* Its own known-issues list rules out 32-bit DX9, OpenGL and Vulkan, and so does this app.
-- **Pass Count, and everything else, from the tool's own page** — press **Home** in game. The compact F8 panel does not drive this route; that was tried and it did not work, and half-driving it was worse than not.
-- **The add-on is shipped exactly as its author built it.** This app writes nothing into its configuration. Every value set from the outside turned out worse than the one the tool chose for itself.
+It uses the community name you chose in Settings.
 
-**It costs frames.** Ten passes is ten times the neural work. Two or three is where people report the picture changing without the frame rate falling apart — start there.
-
-### The rest of what is new
-
-| | |
-|---|---|
-| **Keep running in the tray** | Closing the window hides it instead of quitting, so the overlay keeps answering the game you are still playing. On by default, switchable in Settings ([#255]) |
-| **On-screen DLSS 5 status** | A card over the game saying **On** or **Off**, for anyone recording a comparison — the picture alone cannot show which half is which. Drag it, resize it, and it stays where you left it, per game |
-| **A driver you cannot run this on now asks** | 616.64 and newer fault inside NVIDIA's own neural runtime. The app knew and said so in one line of a log followed by fifty saying "done". It asks once per driver version now, and still lets you install ([#229], [#258], [#104]) |
-| **DirectDraw** | Gens, Kega Fusion and the other pre-Direct3D emulators are recognised at last. dgVoodoo, which this app already downloads for DX8 and DX9, translates DirectDraw too — it simply was never asked ([#150]) |
-| **An older OptiScaler, per game** | 0.2.0-patch1 broke a game that 0.1.1.5 runs. Both are pinned by URL and digest, and a game may name either ([#238]) |
-| **Feeder 0.15.1** | Including its HDR10 bridge, with both of its controls in the F8 panel. An HDR10 swapchain carries PQ BT.2020, which the consumer used to compose as if it were sRGB — which is where blown highlights came from |
-
-### And nine things that were wrong
+### And four things that were wrong
 
 | | |
 |---|---|
-| **Every Feeder slider in the overlay was dead** | The panel pins the Feeder by size and digest before it will drive it, and that pin had been left behind by an earlier upgrade. Nothing failed and nothing was logged — the sliders simply did nothing. A check in the build refuses to produce that state again |
-| **"No 3D executable found" said nothing useful** | It came out both for a folder with no game in it and for engines that load their renderer with `LoadLibrary` — X-Ray, Source, Source 2 — whose executables import no Direct3D. Those are recognised now, and the message says which case it is ([#232], [#199], [#217]) |
-| **Adding one game's folder added its insides** | An Unreal game folder became two entries called "Engine" and "Binaries", and "Engine" then matched the artwork for Wallpaper Engine. A game folder is added as that game now ([#253]) |
-| **A read-only ReShade.ini needed a reinstall** | 2.2.2 fixed the cause but only during an install, so anyone who updated and simply launched the game still met the error banner. Opening the game clears it ([#155]) |
-| **"run npm run payload" reached people with no npm** | It named the wrong cause too: antivirus quarantine for an installed copy, and a half-finished self-extraction for the portable one. It says which, in words, and it says it at launch rather than at the moment you press Install ([#220]) |
-| **The overlay panel could not be resized** | The grip lit up on hover and did nothing: one large invisible button covering the panel took the press first, and ImGui then refused the grip as a later item over an active one |
-| **The panel closed itself during play** | Games that tear down a D3D12 device and build another took the panel's open state with them. One WinGDK title does that five times in 1.2 seconds |
-| **The panel's own message appeared over the game** | ReShade shows log lines on screen, and the add-on wrote one every time it registered |
-| **The Games header scrolled away** | With thirty games, the moment you want "Add a game" is the moment it is furthest away ([#231]) |
+| **Native DLSS (RenoDX) installed the multipass consumer** | The native route's add-on was picked as "the first `.addon64` in the folder", and once the multipass build shipped beside the ordinary one it sorted first. It is chosen by name now, in the app and in the build |
+| **Two RenoDX consumers could sit side by side** | Both register as "RenoDX DLSS"; ReShade keeps whichever loads first and drops the other, so the route you picked stopped deciding what ran. An install now moves any other `renodx-dlss*` add-on beside the game into the backup, and **Restore originals** puts yours back exactly |
+| **A hidden switch could pick multipass on the Feeder route** | Left over from development, with no way to see it or turn it off. It is gone: multipass comes only from its own route |
+| **Community dropdowns were white on white** | In the dark theme the option lists drew white text on a white popup. Every dropdown now takes a solid colour from the theme |
 
-[Full 2.2.5 notes →](https://github.com/rakanki911/DLSS5-Swapper/releases/tag/v2.2.5)
+**Installed a game on Native DLSS with 2.2.5?** Press **Install** again on the same route and the wrong file is replaced, or **Restore originals** to undo it entirely.
 
-[#104]: https://github.com/rakanki911/DLSS5-Swapper/issues/104
-[#150]: https://github.com/rakanki911/DLSS5-Swapper/issues/150
-[#155]: https://github.com/rakanki911/DLSS5-Swapper/issues/155
-[#199]: https://github.com/rakanki911/DLSS5-Swapper/issues/199
-[#217]: https://github.com/rakanki911/DLSS5-Swapper/issues/217
-[#220]: https://github.com/rakanki911/DLSS5-Swapper/issues/220
-[#229]: https://github.com/rakanki911/DLSS5-Swapper/issues/229
-[#231]: https://github.com/rakanki911/DLSS5-Swapper/issues/231
-[#232]: https://github.com/rakanki911/DLSS5-Swapper/issues/232
-[#238]: https://github.com/rakanki911/DLSS5-Swapper/issues/238
-[#253]: https://github.com/rakanki911/DLSS5-Swapper/issues/253
-[#255]: https://github.com/rakanki911/DLSS5-Swapper/issues/255
-[#258]: https://github.com/rakanki911/DLSS5-Swapper/issues/258
+[Full 2.2.6 notes →](https://github.com/rakanki911/DLSS5-Swapper/releases/tag/v2.2.6)
+
 ## Earlier releases
 
 Each one is written up in full - what broke, why, and what was changed.
 
 | | |
 |---|---|
+| **2.2.5** | [Multipass](docs/releases/v2.2.5.md) - the neural pass up to ten times per frame, plus nine faults fixed at the cause |
 | **2.2.4** | [The Community page](docs/releases/v2.2.4.md) - compare notes with everyone else, plus eight faults fixed at the cause |
 | **2.2.3** | [Six reported faults, fixed at the cause](docs/releases/v2.2.3.md) - OptiScaler on older cards, a game's own stale shader compiler, the overlay on a scaled display |
 | **2.2.2** | [The reports people sent](docs/releases/v2.2.2.md) - games it could not find, installs it refused, the overlay's own page |

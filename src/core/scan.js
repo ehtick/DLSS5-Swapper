@@ -649,13 +649,24 @@ function scanSource(sourceDir) {
     return { ok: false, reason: 'sourceMissing' };
   }
 
+  // The native route's consumer, chosen by name. It used to be "the first
+  // .addon64 in the folder", and 2.2.5 shipped the multipass consumer,
+  // renodx-dlss.addon64, at the root where it sorts ahead of
+  // renodx-dlss5.addon64 - so every native install became a multipass one. The
+  // multipass file is never this: it has its own route and its own path.
+  const feederDir = path.join(sourceDir, 'feeder');
   let addon = null;
   for (const dir of [sourceDir, streamlineDir]) {
     try {
-      const found = fs.readdirSync(dir).find((f) => /\.addon64$/i.test(f));
+      const files = fs.readdirSync(dir).filter((f) => /\.addon64$/i.test(f) && !/^renodx-dlss\.addon64$/i.test(f));
+      const found = files.find((f) => /^renodx-dlss5\.addon64$/i.test(f)) || files[0];
       if (found) { addon = path.join(dir, found); break; }
     } catch {}
   }
+  // A 2.2.5 payload carries only the multipass file at its root. The ordinary
+  // consumer is still there: the same verified file the Feeder route installs.
+  const hostConsumer = path.join(feederDir, 'host64', 'renodx-dlss5.addon64');
+  if (!addon && fs.existsSync(hostConsumer)) addon = hostConsumer;
 
   const payload = files.map((name) => ({
     name,
@@ -664,7 +675,6 @@ function scanSource(sourceDir) {
   }));
 
   const nr = payload.find((f) => /^nvngx_dlssnr\.dll$/i.test(f.name));
-  const feederDir = path.join(sourceDir, 'feeder');
   const feeder = {
     version: feederRelease.version,
     addon64: path.join(feederDir, 'dlss5-feed.addon64'),

@@ -650,6 +650,67 @@ ipcMain.handle('community-reaction', (_event, id, emoji, on) => communityAnswer(
 ipcMain.handle('community-admin-moderate', (_event, kind, id, action) => communityAnswer(async () => ({
   result: await community().adminModerate(kind, id, action)
 })));
+ipcMain.handle('community-chat-feed', (_event, options) => communityAnswer(async () => {
+  const input = options && typeof options === 'object' ? options : {};
+  const result = await community().chatFeed({
+    before: input.before, limit: Math.min(Math.max(Number(input.limit) || 50, 1), 100),
+    etag: typeof input.etag === 'string' ? input.etag : null
+  });
+  return result.notModified ? result : { feed: result.data, etag: result.etag };
+}));
+ipcMain.handle('community-chat-people', () => communityAnswer(async () => ({
+  people: await community().chatPeople()
+})));
+ipcMain.handle('community-chat-me', () => communityAnswer(async () => ({
+  me: await community().chatMe(), profile: community().profile()
+})));
+ipcMain.handle('community-chat-upload', (_event, meta, bytes) => communityAnswer(async () => {
+  const input = meta && typeof meta === 'object' ? meta : {};
+  if (!(bytes instanceof ArrayBuffer) || bytes.byteLength > 2 * 1024 * 1024) {
+    throw Object.assign(new Error('Compressed image size is invalid.'), { code: 'image_size' });
+  }
+  return { token: await community().chatUpload(input, bytes) };
+}));
+ipcMain.handle('community-chat-post', (_event, input) => communityAnswer(async () => ({
+  result: await community().chatPost(input && typeof input === 'object' ? input : {})
+})));
+ipcMain.handle('community-chat-edit', (_event, id, body) => communityAnswer(async () => ({
+  result: await community().chatEdit(id, typeof body === 'string' ? body : '')
+})));
+ipcMain.handle('community-chat-delete', (_event, id) => communityAnswer(async () => ({
+  result: await community().chatDelete(id)
+})));
+ipcMain.handle('community-chat-reaction', (_event, id, emoji, on) => communityAnswer(async () => ({
+  result: await community().chatReact(id, emoji, on)
+})));
+ipcMain.handle('community-chat-moderate', (_event, id, action) => communityAnswer(async () => ({
+  result: await community().chatModerate(id, action)
+})));
+ipcMain.handle('community-chat-save-image', async (event, source, suggestedName) => {
+  try {
+    const target = new URL(String(source || ''));
+    if (target.protocol !== 'https:' || target.hostname !== 'media.rakanki.com' || !target.pathname.startsWith('/chat/')) {
+      return { ok: false, message: 'This is not a community chat image.' };
+    }
+    const window = BrowserWindow.fromWebContents(event.sender);
+    const safeName = String(suggestedName || 'dlss5-chat-image').replace(/[^a-z0-9_-]+/gi, '-').slice(0, 80) || 'dlss5-chat-image';
+    const picked = await dialog.showSaveDialog(window, {
+      title: 'Save chat image', defaultPath: path.join(app.getPath('pictures'), `${safeName}.webp`),
+      filters: [{ name: 'WebP image', extensions: ['webp'] }]
+    });
+    if (picked.canceled || !picked.filePath) return { ok: false, cancelled: true };
+    const response = await fetch(target, { redirect: 'error', signal: AbortSignal.timeout(30_000) });
+    const announced = Number(response.headers.get('content-length')) || 0;
+    if (!response.ok || announced > 3 * 1024 * 1024) throw new Error('The image could not be downloaded safely.');
+    const data = Buffer.from(await response.arrayBuffer());
+    if (data.length > 3 * 1024 * 1024) throw new Error('The image is larger than expected.');
+    await fs.promises.writeFile(picked.filePath, data, { flag: 'wx' }).catch(async error => {
+      if (error.code !== 'EEXIST') throw error;
+      await fs.promises.writeFile(picked.filePath, data);
+    });
+    return { ok: true, file: picked.filePath };
+  } catch (error) { return { ok: false, message: error.message }; }
+});
 // The line over the title: where the game came from, and what the store calls
 // it. Both are already known - nothing here is guessed at.
 function kickerFor(dir, game) {
@@ -1140,33 +1201,6 @@ ipcMain.handle('set-optiscaler-build', (_event, dir, version) => {
   state.optiscalerVersion = map;
   saveState(state);
   return chosen;
-});
-
-// Whether this game uses the multipass consumer, and whether this build even
-// carries it - a payload assembled without the file simply does not offer it.
-ipcMain.handle('multipass-state', (_event, dir) => {
-  const file = payload()?.source?.feeder?.multipassAddon;
-  // Held back deliberately. The Feeder is the only route that installs a
-  // neural consumer, and it recognises exactly three names - the glob is
-  // `renodx-dlss5*.addon64`, plus deep-fried-chicken and alexs-toolkit. The
-  // DLSS Tool ships as `renodx-dlss.addon64`, without the 5, so the Feeder
-  // would load it and then report no consumer at all. Offering the choice here
-  // would only produce broken installs; it belongs as its own route, which
-  // does not use the Feeder. #251.
-  const available = false && Boolean(file) && fs.existsSync(file);
-  const key = path.resolve(String(dir || '')).toLowerCase();
-  return { available, on: (loadState().multipassGames || []).includes(key) };
-});
-
-ipcMain.handle('set-multipass', (_event, dir, on) => {
-  if (typeof dir !== 'string' || !dir) return false;
-  const state = loadState();
-  const key = path.resolve(dir).toLowerCase();
-  const list = (state.multipassGames || []).filter((g) => g !== key);
-  if (on === true) list.push(key);
-  state.multipassGames = list;
-  saveState(state);
-  return on === true;
 });
 
 ipcMain.handle('addons', () => addonLibrary());
@@ -1705,10 +1739,6 @@ ipcMain.handle('install', (event, dir, exePath, requestedRoute, requestedApi) =>
       apiLabel: target.apiLabel,
       bitness: target.bitness,
       route,
-      // #251: the multipass consumer, chosen per game and remembered. It
-      // replaces the ordinary one, so it is a property of the install rather
-      // than an add-on somebody drops in beside it.
-      multipass: (loadState().multipassGames || []).includes(path.resolve(dir).toLowerCase()),
       antiCheatAcknowledged,
       emulator: target.emulator,
       source: p.source,

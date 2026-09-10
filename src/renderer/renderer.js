@@ -63,6 +63,7 @@ function setStatus(text, percent) {
 // ---------------- views ----------------
 
 function show(view) {
+  if (view !== 'chat') window.chatUi?.stopPolling?.();
   for (const s of document.querySelectorAll('.view')) s.classList.toggle('active', s.id === 'view-' + view);
   for (const b of document.querySelectorAll('.nav-item')) b.classList.toggle('active', b.dataset.view === view);
   if (view === 'history') renderHistory();
@@ -70,6 +71,7 @@ function show(view) {
   if (view === 'addons') renderAddons();
   if (view === 'overlays') window.overlayLab.render();
   if (view === 'community') window.communityUi.render();
+  if (view === 'chat') window.chatUi?.render?.();
 }
 
 for (const link of document.querySelectorAll('[data-project]')) {
@@ -1102,6 +1104,7 @@ function applyLang(code) {
   if (view && view.id === 'view-overlays') window.overlayLab.render();
   if (view && view.id === 'view-community') window.communityUi.render();
   window.communityUi.applyLanguage();
+  window.chatUi?.applyLanguage?.();
   if (sheetGame) openSheet(sheetGame.dir, true);
 }
 
@@ -1431,7 +1434,7 @@ document.addEventListener('keydown', (e) => {
 });
 // Most job events are progress markers read as codes. The few that are
 // advice for the person are shown in their language instead.
-const SPOKEN_JOB_CODES = new Set(['historySaveWarning', 'driverNeuralFault', 'oldShaderCompiler', 'overlaySkipped', 'feedVkLayerReady', 'neuralModelKept']);
+const SPOKEN_JOB_CODES = new Set(['historySaveWarning', 'driverNeuralFault', 'oldShaderCompiler', 'overlaySkipped', 'feedVkLayerReady', 'neuralModelKept', 'rivalConsumerSetAside']);
 window.lab.onJob((e) => jobLog(SPOKEN_JOB_CODES.has(e.code)
   ? t(e.code, ...Object.values(e.params || {}))
   : `${e.code} ${JSON.stringify(e.params)}`));

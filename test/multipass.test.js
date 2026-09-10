@@ -49,7 +49,9 @@ test('the two consumers have different names, so one can never overwrite the oth
   // written into ReShade.ini - so the file installed and the file enabled
   // cannot drift apart.
   assert.match(apply, /const addonSource = multipass \? source\.feeder\.multipassAddon : source\.addon;/);
-  assert.match(apply, /const addonName = path\.basename\(addonSource\);/);
+  assert.match(apply, /const addonName = addonSource \? path\.basename\(addonSource\) : null;/);
+  assert.match(apply, /enableAddonInIni\(exeDir, addonName, log, gameDir, manifest\)/,
+    'and ReShade.ini enables that same name, not source.addon');
 });
 
 test('the route follows what the add-on says it presents on', () => {

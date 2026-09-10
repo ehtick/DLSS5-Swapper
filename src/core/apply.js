@@ -552,15 +552,15 @@ async function applyFeeder(config, log) {
     feederConfig.configureFeed(feederConfig.readText(cfgPath)), { kind: 'config' }
   );
 
-  // #251: the multipass consumer replaces the ordinary one rather than joining
-  // it - loading both leaves the tickbox saying the neural pass is on while the
-  // picture says otherwise. One name, one file, chosen here and nowhere else.
-  const multipass = Boolean(config && config.multipass) &&
-    Boolean(source.feeder.multipassAddon) && fs.existsSync(source.feeder.multipassAddon);
-  const consumerName = multipass ? 'renodx-dlss.addon64' : 'renodx-dlss5.addon64';
-  const consumerFile = multipass ? source.feeder.multipassAddon : source.feeder.hostAddon;
+  // The Feeder's consumer is always the ordinary one: the Feeder recognises
+  // renodx-dlss5*, and the multipass build is a route of its own (#251). A
+  // per-game switch could once swap it in here, unseen and unreachable from the
+  // app - which is how a game ended up with a multipass nobody had chosen.
+  const consumerName = 'renodx-dlss5.addon64';
+  const consumerFile = source.feeder.hostAddon;
 
   const hostDir = bitness === 32 ? path.join(exeDir, 'host64') : exeDir;
+  await setAsideRivalConsumers(manifest, gameDir, hostDir, consumerName, log);
   const hostExe = bitness === 32 ? path.join(hostDir, 'dlss5-feed-host64.exe') : null;
   const hostFiles = bitness === 32 ? [
     [source.feeder.host64, hostExe, 'feeder'],
@@ -625,6 +625,29 @@ async function enableAddonInIni(exeDir, addonName, log, gameDir, manifest) {
     text = text.replace(/^DisabledAddons=.*$/m, 'DisabledAddons=' + kept.join(','));
     await writeTracked(manifest, gameDir, ini, text, { kind: 'config' });
     log('addonEnabledInIni');
+  }
+}
+
+// Two RenoDX neural consumers in one folder is the fault 2.2.5 shipped: both
+// register as "RenoDX DLSS", ReShade keeps whichever loads first and drops the
+// other, and which one wins follows the order of the file names rather than the
+// route that was picked. Before a consumer goes in, every other renodx-dlss*
+// add-on beside it is moved into the backup - tracked like any replaced file,
+// so Restore puts the person's own build back - and one this app left there
+// itself is simply removed.
+const RENODX_CONSUMER = /^renodx-dlss.*\.addon64$/i;
+async function setAsideRivalConsumers(manifest, gameDir, dir, keep, log) {
+  let names = [];
+  try { names = fs.readdirSync(dir); } catch { return; }
+  for (const name of names) {
+    if (!RENODX_CONSUMER.test(name) || name.toLowerCase() === keep.toLowerCase()) continue;
+    const file = path.join(dir, name);
+    const ours = wasAdded(manifest, path.relative(gameDir, file));
+    const rel = await trackBeforeWrite(manifest, gameDir, file, { kind: 'addon' });
+    await saveActiveManifest(gameDir, manifest);
+    await fs.promises.chmod(file, 0o666).catch(() => {});
+    await fs.promises.unlink(file);
+    log(ours ? 'deleted' : 'rivalConsumerSetAside', { rel, name });
   }
 }
 
@@ -734,10 +757,11 @@ async function applySwap(config, onLog) {
     await copyTracked(manifest, gameDir, item.path, dest, { newVersion: item.version });
   }
 
-  // 3) The RenoDX add-on itself.
+  // 3) The RenoDX add-on itself - and no other beside it.
   const addonSource = multipass ? source.feeder.multipassAddon : source.addon;
+  const addonName = addonSource ? path.basename(addonSource) : null;
+  if (addonName) await setAsideRivalConsumers(manifest, gameDir, exeDir, addonName, log);
   if (addonSource) {
-    const addonName = path.basename(addonSource);
     const dest = path.join(exeDir, addonName);
     const rel = path.relative(gameDir, dest);
     if (fs.existsSync(dest)) {
@@ -860,7 +884,9 @@ async function applySwap(config, onLog) {
     if (setupIsNewer) log('reshadeNewerAvailable', { version: setupVersion });
   }
 
-  if (source.addon) await enableAddonInIni(exeDir, path.basename(source.addon), log, gameDir, manifest);
+  // The file enabled is the file installed. This used to name source.addon,
+  // which on the multipass route is not the add-on that was copied.
+  if (addonName) await enableAddonInIni(exeDir, addonName, log, gameDir, manifest);
 
   await saveActiveManifest(gameDir, manifest);
 

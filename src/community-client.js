@@ -265,6 +265,96 @@ class CommunityClient {
       body: { emoji, on: on !== false }, write: true
     })).data;
   }
+
+  async chatFeed({ before = null, limit = 50, etag = null } = {}) {
+    const query = new URLSearchParams({ limit: String(limit) });
+    if (before) query.set('before', String(before));
+    const endpoint = before ? 'history' : 'feed';
+    const result = await this.request('GET', `/v1/chat/${endpoint}?${query}`, { etag });
+    if (result.data) this.absolutizeAssets(result.data);
+    return result;
+  }
+
+  async chatPeople() {
+    return (await this.request('GET', '/v1/chat/people')).data.people || [];
+  }
+
+  async chatMe() {
+    return (await this.request('GET', '/v1/chat/me', { write: true })).data.me;
+  }
+
+  async chatUpload(meta, bytes) {
+    const token = this.getAdminToken();
+    const payload = Buffer.from(bytes);
+    if (payload.length !== Number(meta?.bytes) || payload.length > 2 * 1024 * 1024) {
+      throw Object.assign(new Error('Compressed image size is invalid.'), { code: 'image_size' });
+    }
+    const endpoint = token ? '/v1/admin/chat/uploads' : '/v1/chat/uploads';
+    const reservation = (await this.request('POST', endpoint, {
+      body: meta, ...(token ? { adminToken: token } : { write: true })
+    })).data;
+    const target = new URL(reservation.uploadUrl);
+    const localDevelopment = /^(127\.0\.0\.1|localhost)$/.test(new URL(this.baseUrl).hostname);
+    if (target.protocol !== 'https:' && !localDevelopment) throw Object.assign(new Error('Unsafe media upload address.'), { code: 'media_address' });
+    if (!localDevelopment && !(target.hostname === 'media.rakanki.com' && /^\/upload\/[A-Za-z0-9_-]{32}$/.test(target.pathname))) {
+      throw Object.assign(new Error('Unexpected media upload address.'), { code: 'media_address' });
+    }
+    let response;
+    try {
+      response = await this.fetch(target, {
+        method: 'PUT', headers: reservation.headers || { 'content-type': 'image/webp' }, body: payload,
+        signal: AbortSignal.timeout(45_000)
+      });
+    } catch (error) {
+      throw Object.assign(new Error('Image upload failed. Check your connection and try again.'), {
+        code: 'media_upload', cause: error
+      });
+    }
+    if (!response.ok) throw Object.assign(new Error('Image upload failed. Please try again.'), {
+      code: 'media_upload', status: response.status
+    });
+    return reservation.token;
+  }
+
+  async chatPost(input) {
+    const token = this.getAdminToken();
+    const endpoint = token ? '/v1/admin/chat/messages' : '/v1/chat/messages';
+    const result = await this.request('POST', endpoint, {
+      body: input, ...(token ? { adminToken: token } : { write: true })
+    });
+    this.absolutizeAssets(result.data);
+    return result.data;
+  }
+
+  async chatEdit(id, body) {
+    const token = this.getAdminToken();
+    const endpoint = token ? `/v1/admin/chat/messages/${encodeURIComponent(id)}` : `/v1/chat/messages/${encodeURIComponent(id)}`;
+    const result = await this.request('PUT', endpoint, {
+      body: { body }, ...(token ? { adminToken: token } : { write: true })
+    });
+    this.absolutizeAssets(result.data);
+    return result.data;
+  }
+
+  async chatDelete(id) {
+    const token = this.getAdminToken();
+    const endpoint = token ? `/v1/admin/chat/messages/${encodeURIComponent(id)}` : `/v1/chat/messages/${encodeURIComponent(id)}`;
+    return (await this.request('DELETE', endpoint, token ? { adminToken: token } : { write: true })).data;
+  }
+
+  async chatReact(id, emoji, on = true) {
+    return (await this.request('POST', `/v1/chat/messages/${encodeURIComponent(id)}/reactions`, {
+      body: { emoji, on: on !== false }, write: true
+    })).data;
+  }
+
+  async chatModerate(messageId, action) {
+    const token = this.getAdminToken();
+    if (!token) throw Object.assign(new Error('Administrator mode is required.'), { code: 'admin_unauthorized' });
+    return (await this.request('POST', '/v1/admin/chat/moderate', {
+      body: { messageId, action }, adminToken: token
+    })).data;
+  }
 }
 
 module.exports = { CommunityClient, DEFAULT_API, ADMIN_TOKEN_PATTERN };

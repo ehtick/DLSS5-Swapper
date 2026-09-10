@@ -1239,7 +1239,7 @@
   // than on every card, and quietly - being offline is not an error here.
   loadMe().catch(() => {});
   window.communityUi = {
-    render, renderProfile, openReport, applyLanguage, stopPolling, syncOwnReports,
+    render, renderProfile, openReport, openCard, applyLanguage, stopPolling, syncOwnReports,
     // The games view asks these: whether this install already reported a game,
     // and how to take that report back from outside the community page.
     reportFor: dir => { const found = mineForDir(dir); return found ? { key: found[0], ...found[1] } : null; },

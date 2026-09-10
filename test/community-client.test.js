@@ -151,3 +151,56 @@ test('administrator mode edits, deletes and moderates through protected endpoint
   assert.ok(calls.every(call => call.options.headers.authorization === `Bearer ${token}`));
   assert.ok(calls.every(call => call.options.headers['x-install'] === undefined));
 });
+
+test('chat reads stay public while user writes keep the install identity', async t => {
+  const { client, calls } = fixture(t, [
+    { body: { version: 1, messages: [], hasMore: false }, headers: { etag: '"chat-1"' } },
+    { body: { people: [{ name: 'Nova', tag: 'abcd' }] } },
+    { body: { me: { name: 'Nova', icon: 2, tag: 'abcd' } } },
+    { body: { message: { id: 1, body: 'Hello' } } },
+    { body: { ok: true, reactions: { '❤️': 1 } } }
+  ]);
+  const feed = await client.chatFeed({ limit: 50 });
+  await client.chatPeople();
+  await client.chatMe();
+  await client.chatPost({ body: 'Hello' });
+  await client.chatReact(1, '❤️');
+  assert.equal(feed.etag, '"chat-1"');
+  assert.equal(calls[0].options.headers['x-install'], undefined, 'shared feed remains edge-cacheable');
+  assert.equal(calls[1].options.headers['x-install'], undefined, 'mention directory is shared too');
+  assert.ok(calls[2].options.headers['x-install'], 'private identity is never a cached read');
+  assert.ok(calls[3].options.headers['x-install']);
+  assert.ok(calls[4].options.headers['x-install']);
+});
+
+test('chat image bytes go through the single-use metered media gate', async t => {
+  const { client, calls } = fixture(t, [
+    { body: { token: 'token', uploadUrl: 'https://media.rakanki.com/upload/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', headers: { 'content-type': 'image/webp' } } },
+    { status: 200, body: null }
+  ]);
+  const bytes = new Uint8Array(1200).buffer;
+  assert.equal(await client.chatUpload({ mime: 'image/webp', width: 100, height: 100, bytes: 1200 }, bytes), 'token');
+  assert.equal(calls[0].url, 'https://example.test/v1/chat/uploads');
+  assert.ok(calls[0].options.headers['x-install']);
+  assert.match(String(calls[1].url), /^https:\/\/media\.rakanki\.com\/upload\//);
+  assert.equal(calls[1].options.method, 'PUT');
+  assert.equal(calls[1].options.body.length, 1200);
+});
+
+test('administrator chat messages use the protected routes', async t => {
+  const token = 'dlss5_admin_' + 'D'.repeat(43);
+  const { client, calls } = fixture(t, [
+    { body: { message: { id: 4, body: 'Official', by: { admin: true } } } },
+    { body: { message: { id: 4, body: 'Updated', by: { admin: true } } } },
+    { body: { ok: true } }, { body: { ok: true } }
+  ], { getAdminToken: () => token });
+  await client.chatPost({ body: 'Official' });
+  await client.chatEdit(4, 'Updated');
+  await client.chatDelete(4);
+  await client.chatModerate(8, 'hide');
+  assert.deepEqual(calls.map(call => [call.options.method, new URL(call.url).pathname]), [
+    ['POST', '/v1/admin/chat/messages'], ['PUT', '/v1/admin/chat/messages/4'],
+    ['DELETE', '/v1/admin/chat/messages/4'], ['POST', '/v1/admin/chat/moderate']
+  ]);
+  assert.ok(calls.every(call => call.options.headers.authorization === `Bearer ${token}`));
+});
