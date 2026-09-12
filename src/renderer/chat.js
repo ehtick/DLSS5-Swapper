@@ -579,6 +579,22 @@
     startPolling();
   }
 
+  // Opened from a notification: find that message once the page has loaded it,
+  // bring it into view, and light it for a moment so the eye lands on it.
+  async function focusMessage(id) {
+    const selector = `[data-chat-message="${CSS.escape(String(id))}"]`;
+    let node = null;
+    for (let tries = 0; tries < 25 && !node; tries++) {
+      node = document.querySelector(selector);
+      if (!node) await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    if (!node) return false;
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    node.classList.add('chat-flash');
+    setTimeout(() => node.classList.remove('chat-flash'), 2600);
+    return true;
+  }
+
   bind(); applyLanguage();
-  window.chatUi = { render, stopPolling, applyLanguage };
+  window.chatUi = { render, stopPolling, applyLanguage, focusMessage };
 })();

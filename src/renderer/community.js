@@ -5,7 +5,7 @@
   const L = {
     en: {
       title: 'Community-tested games', subtitle: 'Real results from DLSS 5 Swapper users.', refresh: 'Refresh', search: 'Search games', route: 'Route', api: 'Rendering API', result: 'Result',
-      allRoutes: 'All routes', allApis: 'All APIs', allResults: 'All results', working: 'Working', issues: 'Works with issues', broken: 'Not working', mixed: 'Mixed', clear: 'Clear filters', loading: 'Loading community results…', empty: 'No matching community reports yet.', offline: 'Community service is unavailable. Check your connection and try again.',
+      scopeAll: 'Everyone', scopeMine: 'My games', scopeReports: 'My comments', mineHint: 'Only the games installed on this PC', reportsHint: 'The games you reported on', reportsTotal: n => `You reported on ${n} game${n === 1 ? '' : 's'}`, reportsEmpty: 'You have not reported on any game yet.', showingMine: n => `Your ${n} report${n === 1 ? '' : 's'}`, sortLabel: 'Sort', sortRecent: 'Most recent', sortReports: 'Most reports', sortTitle: 'A–Z', noReportsYet: n => `On this PC, no reports yet · ${n}`, noReportsHint: 'Open one to install it - then be the first to say how it went.', installedBadge: 'DLSS 5 installed', onPc: 'On this PC', gpuLabel: 'Graphics card', allGpus: 'All graphics cards', myGpu: model => `My card · ${model}`, mineEmpty: 'None of the games on this PC have community reports yet.', mineTotal: n => `${n} of your games have reports`, showingGpu: (model, n) => `${n} report${n === 1 ? '' : 's'} on ${model}`, allRoutes: 'All routes', allApis: 'All APIs', allResults: 'All results', working: 'Working', issues: 'Works with issues', broken: 'Not working', mixed: 'Mixed', clear: 'Clear filters', loading: 'Loading community results…', empty: 'No matching community reports yet.', offline: 'Community service is unavailable. Check your connection and try again.',
       reports: n => `${n} report${n === 1 ? '' : 's'}`, comments: n => `${n} comment${n === 1 ? '' : 's'}`, noComments: 'No comments yet.', updated: 'Live updates are on while this card is open.',
       share: 'Share your result', shareHint: 'Share your result and help the community.', why: 'Your report helps improve compatibility for everyone.', routeUsed: 'Route used', choose: 'Choose…', unknown: 'No results yet', yourResult: 'Your result', optionalComment: 'Optional comment', sent: 'Data that will be sent', cancel: 'Cancel', submit: 'Submit report', submitting: 'Submitting…', chooseRoute: 'Choose the route you actually used.', chooseVerdict: 'Choose your result.', sentOk: 'Your report was added to the community.',
       profile: 'Community profile', profileHint: 'Your fixed avatar and display name appear beside your comments. A name can change once a week.', displayName: 'Display name', chooseIcon: 'Choose an avatar', save: 'Save profile', saved: 'Profile saved.', adminMode: 'Administrator mode', adminModeHint: 'Your replies are sent with your official name, avatar and ADMIN badge.', adminLogout: 'Sign out of administrator mode', adminLoggedOut: 'Administrator mode signed out.', unnamed: 'Anonymous', addGame: 'Add to community-tested games', reactionFailed: 'Could not save that reaction.',
@@ -20,6 +20,10 @@
       noticeReplied: (who, game) => `${who} replied to you on ${game}`,
       noticeMentioned: (who, game) => `${who} mentioned you on ${game}`,
       noticeOnGame: (who, game) => `${who} commented on ${game}`,
+      noticeReacted: (who, emoji, game) => `${who} reacted ${emoji} to your report on ${game}`,
+      noticeChatMention: who => `${who} mentioned you in the chat`,
+      noticeChatReply: who => `${who} replied to you in the chat`,
+      noticeChatReaction: (who, emoji) => `${who} reacted ${emoji} to your message in the chat`,
       noticeMany: n => `${n} new community messages`, noticeSomeone: 'Someone',
       sentTitle: 'Report sent', sentNote: 'Your result is on the community page for this game. Thank you.',
       sentGo: 'Go to my comment', sentStay: 'Done',
@@ -35,7 +39,7 @@
     },
     ar: {
       title: 'ألعاب اختبرها المجتمع', subtitle: 'نتائج حقيقية من مستخدمي DLSS 5 Swapper.', refresh: 'تحديث', search: 'بحث عن لعبة', route: 'طريقة التثبيت', api: 'واجهة الرسوم', result: 'النتيجة',
-      allRoutes: 'كل الطرق', allApis: 'كل الواجهات', allResults: 'كل النتائج', working: 'تعمل', issues: 'تعمل مع مشاكل', broken: 'لا تعمل', mixed: 'نتائج مختلطة', clear: 'مسح الفلاتر', loading: 'جاري تحميل نتائج المجتمع…', empty: 'لا توجد تقارير مطابقة حتى الآن.', offline: 'خدمة المجتمع غير متاحة. تحقق من اتصالك وحاول مجددًا.',
+      scopeAll: 'الجميع', scopeMine: 'ألعابي', scopeReports: 'تعليقاتي', mineHint: 'الألعاب المثبّتة على جهازك فقط', reportsHint: 'الألعاب التي كتبت عنها تقريرًا', reportsTotal: n => `كتبت عن ${n} لعبة`, reportsEmpty: 'لم تكتب تقريرًا عن أي لعبة بعد.', showingMine: n => `تقاريرك: ${n}`, sortLabel: 'الترتيب', sortRecent: 'الأحدث', sortReports: 'الأكثر تقارير', sortTitle: 'أبجديًا', noReportsYet: n => `على جهازك، بلا تقارير بعد · ${n}`, noReportsHint: 'افتح أيًّا منها لتثبّت عليه، ثم كن أول من يكتب النتيجة.', installedBadge: 'DLSS 5 مثبّت', onPc: 'على جهازك', gpuLabel: 'كرت الشاشة', allGpus: 'كل كروت الشاشة', myGpu: model => `كرتي · ${model}`, mineEmpty: 'لا توجد تقارير من المجتمع لأي لعبة على جهازك حتى الآن.', mineTotal: n => `${n} من ألعابك عليها تقارير`, showingGpu: (model, n) => `${n} تقرير على ${model}`, allRoutes: 'كل الطرق', allApis: 'كل الواجهات', allResults: 'كل النتائج', working: 'تعمل', issues: 'تعمل مع مشاكل', broken: 'لا تعمل', mixed: 'نتائج مختلطة', clear: 'مسح الفلاتر', loading: 'جاري تحميل نتائج المجتمع…', empty: 'لا توجد تقارير مطابقة حتى الآن.', offline: 'خدمة المجتمع غير متاحة. تحقق من اتصالك وحاول مجددًا.',
       reports: n => `${n} تقرير`, comments: n => `${n} تعليق`, noComments: 'لا توجد تعليقات بعد.', updated: 'التحديث المباشر يعمل أثناء فتح هذه البطاقة.',
       share: 'شارك نتيجتك', shareHint: 'شارك نتيجتك وساعد المجتمع.', why: 'بلاغك يحسّن التوافق للجميع.', routeUsed: 'طريقة التثبيت المستخدمة', choose: 'اختر…', unknown: 'لا نتائج بعد', yourResult: 'نتيجتك', optionalComment: 'تعليق اختياري', sent: 'البيانات التي سيتم إرسالها', cancel: 'إلغاء', submit: 'إرسال التقرير', submitting: 'جاري الإرسال…', chooseRoute: 'اختر طريقة التثبيت التي استخدمتها فعليًا.', chooseVerdict: 'اختر نتيجتك.', sentOk: 'تمت إضافة تقريرك إلى المجتمع.',
       profile: 'ملف المجتمع', profileHint: 'تظهر صورتك الثابتة واسمك بجانب تعليقاتك. يمكن تغيير الاسم مرة كل أسبوع.', displayName: 'اسم العرض', chooseIcon: 'اختر صورة', save: 'حفظ الملف', saved: 'تم حفظ الملف.', adminMode: 'وضع الإدارة', adminModeHint: 'ستُرسل ردودك باسمك وصورتك الرسمية مع شارة ADMIN.', adminLogout: 'تسجيل الخروج من وضع الإدارة', adminLoggedOut: 'تم تسجيل الخروج من وضع الإدارة.', unnamed: 'مجهول', addGame: 'إضافة إلى الألعاب المختبرة من المجتمع', reactionFailed: 'تعذر حفظ التفاعل.',
@@ -50,6 +54,10 @@
       noticeReplied: (who, game) => `${who} ردّ عليك في ${game}`,
       noticeMentioned: (who, game) => `${who} أشار إليك في ${game}`,
       noticeOnGame: (who, game) => `${who} علّق على ${game}`,
+      noticeReacted: (who, emoji, game) => `${who} تفاعل ${emoji} مع تقريرك في ${game}`,
+      noticeChatMention: who => `${who} أشار إليك في الشات`,
+      noticeChatReply: who => `${who} ردّ عليك في الشات`,
+      noticeChatReaction: (who, emoji) => `${who} تفاعل ${emoji} مع رسالتك في الشات`,
       noticeMany: n => `${n} رسائل جديدة من المجتمع`, noticeSomeone: 'أحدهم',
       sentTitle: 'تم إرسال التقرير', sentNote: 'نتيجتك الآن في صفحة المجتمع لهذه اللعبة. شكرًا لك.',
       sentGo: 'اذهب إلى تعليقي', sentStay: 'تم',
@@ -73,7 +81,15 @@
   // cached and shared; the server stays the authority on the counts, and a
   // stale entry here only costs one request it ignores.
   const readMine = () => { try { return JSON.parse(localStorage.getItem(MINE_KEY)) || {}; } catch { return {}; } };
-  const state = { art: {}, thread: null, route: null, me: null, admin: null, watching: [], editing: null, mentions: [], cards: [], filters: { q: '', route: 'all', api: 'all', status: 'all' }, active: null, etag: null, timer: null, report: null, verdict: null, mine: readMine() };
+  // "My games" is a way of looking at the page, so it is remembered.
+  function readScope() {
+    try {
+      const saved = localStorage.getItem('community-scope');
+      if (['all', 'mine', 'reports'].includes(saved)) return saved;
+      return localStorage.getItem('community-mine-only') === '1' ? 'mine' : 'all';
+    } catch { return 'all'; }
+  }
+  const state = { art: {}, thread: null, route: null, me: null, admin: null, watching: [], editing: null, mentions: [], cards: [], filters: { q: '', route: 'all', api: 'all', status: 'all', gpu: 'all', sort: 'recent' }, scope: readScope(), library: [], unreported: [], features: [], gpuList: null, gpuShowAll: false, reportsShowAll: false, active: null, etag: null, timer: null, report: null, verdict: null, mine: readMine() };
   // A report can only be corrected from the game it was written about - the
   // dialog reads the folder to fill itself in. Which folder that was is
   // remembered here, keyed by the card the server filed it under.
@@ -263,11 +279,15 @@
 
   function applyLanguage() {
     const s = text();
-    const values = { communityTitle: s.title, communitySubtitle: s.subtitle, communityRefresh: s.refresh, communitySearchLabel: s.search, communityRouteLabel: s.route, communityApiLabel: s.api, communityStatusLabel: s.result, communityClear: s.clear, communityReportRouteLabel: s.routeUsed, communityReportApiLabel: s.api, communityVerdictLabel: s.yourResult, communityCommentLabel: s.optionalComment, communityPrivacyTitle: s.sent, communityWhy: s.why, communityReportCancel: s.cancel, communityReportSubmit: s.submit };
+    const values = { communityTitle: s.title, communitySubtitle: s.subtitle, communityRefresh: s.refresh, communitySearchLabel: s.search, communityRouteLabel: s.route, communityApiLabel: s.api, communityStatusLabel: s.result, communityGpuLabel: s.gpuLabel, communitySortLabel: s.sortLabel, communityScopeAll: s.scopeAll, communityScopeMine: s.scopeMine, communityScopeReports: s.scopeReports, communityClear: s.clear, communityReportRouteLabel: s.routeUsed, communityReportApiLabel: s.api, communityVerdictLabel: s.yourResult, communityCommentLabel: s.optionalComment, communityPrivacyTitle: s.sent, communityWhy: s.why, communityReportCancel: s.cancel, communityReportSubmit: s.submit };
     for (const [id, value] of Object.entries(values)) if ($(id)) $(id).textContent = value;
     const setOption = (id, value, label) => { const option = $(id)?.querySelector(`option[value="${value}"]`); if (option) option.textContent = label; };
     setOption('communityRoute', 'all', s.allRoutes); setOption('communityApi', 'all', s.allApis); setOption('communityStatus', 'all', s.allResults);
     setOption('communityStatus', 'working', s.working); setOption('communityStatus', 'mixed', s.mixed); setOption('communityStatus', 'broken', s.broken);
+    if ($('communityScopeMineBtn')) $('communityScopeMineBtn').title = s.mineHint;
+    if ($('communityScopeReportsBtn')) $('communityScopeReportsBtn').title = s.reportsHint;
+    setOption('communitySort', 'recent', s.sortRecent); setOption('communitySort', 'reports', s.sortReports); setOption('communitySort', 'title', s.sortTitle);
+    paintGpuOptions();
     setOption('communityReportRoute', '', s.choose); setOption('communityReportApi', '', s.choose);
     const verdictLabels = [s.working, s.issues, s.broken];
     document.querySelectorAll('.community-verdicts button span').forEach((node, index) => { node.textContent = verdictLabels[index]; });
@@ -287,9 +307,12 @@
               : `<span class="community-initials" aria-hidden="true">${esc(initialsOf(card.title))}</span>`}
       <span class="community-veil"></span>
       <span class="community-pill ${statusClass(card.status)}"><i class="community-dot ${statusClass(card.status)}"></i>${esc(statusText(card.status))}</span>
-      <span class="community-kind">${esc(card.kind)}</span>
+      ${card.local
+        ? `<span class="community-kind community-local${card.local.installed ? ' installed' : ''}">${esc(card.local.installed ? text().installedBadge : text().onPc)}</span>`
+        : `<span class="community-kind">${esc(card.kind)}</span>`}
       <span class="community-card-body">
         <span class="community-title">${esc(card.title)}</span>
+        ${(card.apis || []).length ? `<span class="community-apis">${card.apis.map(api => `<i>${esc(String(api).toUpperCase())}</i>`).join('')}</span>` : ''}
         <span class="community-counts">
           <span class="green"><i class="community-dot green"></i>${count.green}</span>
           <span class="yellow"><i class="community-dot yellow"></i>${count.yellow}</span>
@@ -304,7 +327,29 @@
     </button>`;
   }
 
+  // My games, the other half: the games on this PC nobody has reported on. Small,
+  // below the cards, and each opens the game itself - to install, and then to
+  // be the first to say how it went.
+  function paintUnreported() {
+    const box = $('communityUnreported');
+    if (!box) return;
+    const games = state.unreported || [];
+    box.hidden = !games.length;
+    if (!games.length) { box.innerHTML = ''; return; }
+    const s = text();
+    box.innerHTML = `<header><h4>${esc(s.noReportsYet(games.length))}</h4><p>${esc(s.noReportsHint)}</p></header>
+      <div class="community-unreported-grid">${games.map(game => {
+        const poster = game.poster && game.poster.url;
+        return `<button type="button" class="community-unreported-tile" data-local-dir="${esc(game.dir)}" title="${esc(game.title)}">
+          <span class="community-unreported-art">${poster ? `<img src="${esc(poster)}" alt="" loading="lazy">` : `<i>${esc(initialsOf(game.title))}</i>`}</span>
+          <span class="community-unreported-name">${esc(game.title)}</span>
+          ${game.installed ? `<span class="community-unreported-tag">${esc(s.installedBadge)}</span>` : ''}
+        </button>`;
+      }).join('')}</div>`;
+  }
+
   const paintCards = () => {
+    paintUnreported();
     const grid = $('communityCards');
     grid.innerHTML = state.cards.map(cardMarkup).join('');
     for (const card of state.cards) {
@@ -324,13 +369,24 @@
   };
 
   async function render({ fresh = false } = {}) {
+    // Filters change faster than the network answers. Only the newest request
+    // may paint the page: an older answer arriving late must never put back a
+    // list the person has already filtered away.
+    const ticket = state.renderTicket = (state.renderTicket || 0) + 1;
     applyLanguage();
     $('communityNotice').textContent = text().loading;
     $('communityRefresh').disabled = true;
+    const filters = { ...state.filters, fresh: fresh || undefined };
+    // A filter an older server does not know would be ignored in silence, so
+    // it goes only to a server that said it can do it.
+    if (!state.features.includes('gpu')) delete filters.gpu;
+    if (!state.features.includes('sort')) delete filters.sort;
+    const scope = state.features.includes('mine') ? state.scope : 'all';
     const [response] = await Promise.all([
-      window.lab.communityCards({ ...state.filters, fresh: fresh || undefined }),
+      scope === 'all' ? window.lab.communityCards(filters) : window.lab.communitySearch(filters, scope),
       syncOwnReports().catch(() => false)
     ]);
+    if (ticket !== state.renderTicket) return;
     $('communityRefresh').disabled = false;
     if (!response?.ok) {
       $('communityCards').innerHTML = '';
@@ -340,7 +396,31 @@
       $('communityNotice').textContent = response?.message || text().offline;
       return;
     }
+    // The first answer is also where the server says which filters it has. If
+    // that makes a remembered choice possible, ask again with it applied.
+    const known = state.features.join();
+    state.features = Array.isArray(response.features) ? response.features : [];
+    paintFeatureControls();
+    if (state.features.join() !== known &&
+        ((state.scope !== 'all' && state.features.includes('mine') && scope === 'all') ||
+         (state.filters.gpu !== 'all' && state.features.includes('gpu') && !filters.gpu) ||
+         (state.filters.sort !== 'recent' && state.features.includes('sort') && !filters.sort))) return render({ fresh });
     state.cards = response.cards || [];
+    state.library = scope === 'mine' && Array.isArray(response.library) ? response.library : [];
+    // Which of this PC's games each card is, so the card can say so.
+    for (const card of state.cards) card.local = state.library.find(game => (game.keys || []).includes(card.key)) || null;
+    // One game can sit on two cards: one filed under its executable and an older
+    // one under its title. My games shows each game once - the card with the
+    // most reviews, because that is the fullest answer to "does it work".
+    if (scope === 'mine') {
+      const best = new Map();
+      for (const card of state.cards) {
+        if (!card.local) continue;
+        const held = best.get(card.local);
+        if (!held || (Number(card.reports) || 0) > (Number(held.reports) || 0)) best.set(card.local, card);
+      }
+      state.cards = state.cards.filter(card => !card.local || best.get(card.local) === card);
+    }
     // Artwork is prepared once by the community server. Populate the whole
     // grid from that response so cards arrive complete instead of making every
     // desktop fetch Steam images one after another.
@@ -351,9 +431,59 @@
         palette: null
       } : null;
     }
-    $('communityGameTotal').textContent = text().gameTotal(Number(response.total) || 0);
-    $('communityNotice').textContent = state.cards.length ? '' : text().empty;
+    const s = text();
+    $('communityGameTotal').textContent = scope === 'mine' ? s.mineTotal(state.cards.length)
+      : scope === 'reports' ? s.reportsTotal(state.cards.length) : s.gameTotal(Number(response.total) || 0);
+    // The games on this PC that nobody reported on - only when nothing else is
+    // narrowing the page, or "no reports" would be a claim about a filter.
+    state.unreported = scope === 'mine' && !filtersActive()
+      ? state.library.filter(game => !state.cards.some(card => card.local === game)) : [];
+    $('communityNotice').textContent = state.cards.length || state.unreported.length ? ''
+      : scope === 'mine' ? s.mineEmpty : scope === 'reports' ? s.reportsEmpty : s.empty;
     paintCards();
+  }
+
+  // The two controls only a newer server understands, hidden until it says it
+  // can do them - an app released before a deploy must not offer a filter that
+  // quietly does nothing.
+  function paintFeatureControls() {
+    const gpu = $('communityGpuField'), sort = $('communitySortField'), scope = $('communityScope');
+    if (gpu) gpu.hidden = !state.features.includes('gpu');
+    if (sort) sort.hidden = !state.features.includes('sort');
+    if (scope) {
+      scope.hidden = !state.features.includes('mine');
+      for (const button of scope.querySelectorAll('[data-scope]')) {
+        const on = button.dataset.scope === state.scope;
+        button.classList.toggle('on', on);
+        button.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+    }
+    if (state.features.includes('gpu') && !state.gpuList) loadGpus();
+  }
+
+  const filtersActive = () => Boolean(state.filters.q) || ['route', 'api', 'status', 'gpu'].some(key => state.filters[key] !== 'all');
+
+  async function loadGpus() {
+    state.gpuList = { gpus: [], mine: null };
+    const answer = await window.lab.communityGpus().catch(() => null);
+    if (answer?.ok) state.gpuList = { gpus: answer.gpus || [], mine: answer.mine || null };
+    paintGpuOptions();
+  }
+
+  // "My card" first - the reason the filter exists - then every card people
+  // actually reported with, most used first.
+  function paintGpuOptions() {
+    const select = $('communityGpu');
+    if (!select || !state.gpuList) return;
+    const s = text();
+    const { gpus, mine } = state.gpuList;
+    const option = (value, label) => `<option value="${esc(value)}">${esc(label)}</option>`;
+    select.innerHTML = option('all', s.allGpus)
+      + (mine ? option(mine, s.myGpu(mine)) : '')
+      + gpus.filter(row => row.model !== mine).map(row => option(row.model, `${row.model} (${row.reports})`)).join('');
+    const wanted = state.filters.gpu;
+    select.value = [...select.options].some(item => item.value === wanted) ? wanted : 'all';
+    state.filters.gpu = select.value;
   }
 
   function routeCounts(verdicts) {
@@ -587,13 +717,28 @@
         <span class="community-route-counts">${routeCounts(card.verdicts)}</span>
       </span>`;
     wirePalette(card, head.querySelectorAll('img'), [$('communityCardDialog'), head]);
-    const shown = state.route
+    const byRoute = state.route
       ? (card.comments || []).filter(item => item.route === state.route)
       : (card.comments || []);
+    // With a card chosen on the page, the game opens on what people with that
+    // card found - the whole point of choosing it - with the rest a click away.
+    const gpuFilter = state.filters.gpu !== 'all' && state.features.includes('gpu') && !state.gpuShowAll ? state.filters.gpu : null;
+    const byGpu = gpuFilter ? byRoute.filter(item => item.gpu === gpuFilter) : byRoute;
+    // Opened from "My comments", the game starts on what you wrote.
+    const mineFirst = state.scope === 'reports' && state.features.includes('mine') && !state.reportsShowAll;
+    const shown = mineFirst ? byGpu.filter(item => isMine(item.by)) : byGpu;
     $('communityCardBody').innerHTML = `
       ${state.route ? `<div class="community-route-filter">
         <span>${esc(text().showing(routeName(state.route), shown.length))}</span>
         <button type="button" id="communityRouteClear">${esc(text().showAll)}</button>
+      </div>` : ''}
+      ${gpuFilter ? `<div class="community-route-filter">
+        <span>${esc(text().showingGpu(gpuFilter, shown.length))}</span>
+        <button type="button" id="communityGpuClear">${esc(text().showAll)}</button>
+      </div>` : ''}
+      ${mineFirst ? `<div class="community-route-filter">
+        <span>${esc(text().showingMine(shown.length))}</span>
+        <button type="button" id="communityMineClear">${esc(text().showAll)}</button>
       </div>` : ''}
       <div class="community-comments">
         ${(card.announcements || []).map(announcementMarkup).join('')}
@@ -603,11 +748,15 @@
       </div>`;
     const clear = $('communityRouteClear');
     if (clear) clear.onclick = () => { state.route = null; paintCard(state.active); };
+    const gpuClear = $('communityGpuClear');
+    if (gpuClear) gpuClear.onclick = () => { state.gpuShowAll = true; paintCard(state.active); };
+    const mineClear = $('communityMineClear');
+    if (mineClear) mineClear.onclick = () => { state.reportsShowAll = true; paintCard(state.active); };
     paintFollow();
   }
 
   async function openCard(key) {
-    stopPolling(); state.etag = null;
+    stopPolling(); state.etag = null; state.gpuShowAll = false; state.reportsShowAll = false;
     const response = await window.lab.communityCard(key, null);
     if (!response?.ok || !response.card) { $('communityNotice').textContent = response?.message || text().offline; return; }
     state.etag = response.etag; paintCard(response.card);
@@ -990,8 +1139,12 @@
         const where = notice.title || '';
         const title = notice.kind === 'mention' ? s.noticeMentioned(who, where)
           : notice.kind === 'watch' ? s.noticeOnGame(who, where)
-            : s.noticeReplied(who, where);
-        return { title, body: notice.body || '', card: notice.card, report: notice.report };
+            : notice.kind === 'reaction' ? s.noticeReacted(who, notice.emoji || '', where)
+              : notice.kind === 'chat-mention' ? s.noticeChatMention(who)
+                : notice.kind === 'chat-reply' ? s.noticeChatReply(who)
+                  : notice.kind === 'chat-reaction' ? s.noticeChatReaction(who, notice.emoji || '')
+                    : s.noticeReplied(who, where);
+        return { title, body: notice.body || '', card: notice.card, report: notice.report, kind: notice.kind, chat: notice.chat };
       });
       const shown = spoken.length > 3
         ? [{ title: s.noticeMany(spoken.length), body: spoken.map(item => item.title).join(' · ').slice(0, 200) }]
@@ -1001,6 +1154,12 @@
     });
     if (window.lab.onCommunityOpen) {
       window.lab.onCommunityOpen(async notice => {
+        // A chat notice opens the chat on that message, not a game card.
+        if (notice?.chat) {
+          document.querySelector('[data-view="chat"]')?.click();
+          await window.chatUi?.focusMessage?.(notice.chat);
+          return;
+        }
         if (!notice?.card) return;
         document.querySelector('[data-view="community"]')?.click();
         await render();
@@ -1117,11 +1276,30 @@
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMessageMenu(); });
     window.addEventListener('blur', closeMessageMenu);
     window.addEventListener('resize', closeMessageMenu);
-    for (const [id, key] of [['communitySearch','q'],['communityRoute','route'],['communityApi','api'],['communityStatus','status']]) {
+    for (const [id, key] of [['communitySearch','q'],['communityRoute','route'],['communityApi','api'],['communityStatus','status'],['communityGpu','gpu'],['communitySort','sort']]) {
       $(id).addEventListener(id === 'communitySearch' ? 'input' : 'change', event => { state.filters[key] = event.target.value; clearTimeout(bind.wait); bind.wait = setTimeout(render, id === 'communitySearch' ? 250 : 0); });
     }
     $('communityRefresh').onclick = render;
-    $('communityClear').onclick = () => { state.filters = { q: '', route: 'all', api: 'all', status: 'all' }; for (const id of ['communitySearch','communityRoute','communityApi','communityStatus']) $(id).value = id === 'communitySearch' ? '' : 'all'; render(); };
+    $('communityScope').onclick = event => {
+      const button = event.target.closest('[data-scope]');
+      if (!button || button.dataset.scope === state.scope) return;
+      state.scope = button.dataset.scope;
+      try { localStorage.setItem('community-scope', state.scope); } catch { /* not remembered */ }
+      paintFeatureControls();
+      render();
+    };
+    $('communityUnreported').onclick = event => {
+      const tile = event.target.closest('[data-local-dir]');
+      if (tile && typeof window.openSheet === 'function') window.openSheet(tile.dataset.localDir);
+    };
+    $('communityClear').onclick = () => {
+      state.filters = { q: '', route: 'all', api: 'all', status: 'all', gpu: 'all', sort: 'recent' };
+      for (const id of ['communitySearch','communityRoute','communityApi','communityStatus','communityGpu','communitySort']) if ($(id)) $(id).value = id === 'communitySearch' ? '' : id === 'communitySort' ? 'recent' : 'all';
+      state.scope = 'all';
+      try { localStorage.setItem('community-scope', 'all'); } catch { /* not remembered */ }
+      paintFeatureControls();
+      render();
+    };
     $('communityCards').onclick = event => { const card = event.target.closest('[data-community-card]'); if (card) openCard(card.dataset.communityCard); };
     // Where the pointer is inside a comment card, handed to CSS so the gold rim
     // lights the edge nearest it. One listener for the whole list, and the work

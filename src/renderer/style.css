@@ -170,8 +170,86 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000' stroke-width='1.8' d='M8 5h8v4H8zM4 10h16v8H4zM8 14h.01M11 14h.01M16 14h.01'/%3E%3C/svg%3E") center/contain no-repeat;
 }
 .community-filters {
-  display: grid; grid-template-columns: minmax(230px, 1.8fr) repeat(3, minmax(130px, 1fr)) auto;
-  gap: 10px; align-items: end; margin: 14px 0 18px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin: 14px 0 18px;
+}
+.community-filters > label { flex: 1 1 130px; min-width: 0; }
+.community-filters > label:first-child { flex: 2 1 230px; }
+.community-filters > #communityGpuField { flex: 1.5 1 190px; }
+.community-filters [hidden] { display: none !important; }
+.community-filters input, .community-filters select { width: 100%; min-width: 0; box-sizing: border-box; }
+.community-filters > .ghost { flex: none; }
+/* Everyone | My games | My comments: one control, three ways to look. */
+.community-scope {
+  display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin: -4px 0 18px; border-radius: 13px;
+  border: 1px solid var(--line); background: var(--glass);
+}
+.community-scope[hidden] { display: none !important; }
+.community-scope button {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 15px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.community-scope button:hover { color: var(--text); }
+.community-scope button.on {
+  color: var(--text); background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.community-scope svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.community-scope button.on svg { color: var(--accent); }
+.community-kind.community-local { color: #fff; }
+.community-kind.community-local.installed {
+  background: color-mix(in srgb, var(--accent) 42%, rgba(10,16,24,.7));
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+/* The games on this PC that nobody has reported on yet. */
+.community-unreported { margin-top: 28px; }
+.community-unreported[hidden] { display: none !important; }
+.community-unreported header { display: grid; gap: 4px; margin-bottom: 12px; }
+.community-unreported h4 { margin: 0; font-size: 14px; color: var(--text); }
+.community-unreported p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.community-unreported-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+.community-unreported-tile {
+  position: relative; display: grid; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 13px;
+  background: var(--glass); color: var(--text); font: inherit; text-align: start; cursor: pointer;
+  transition: border-color .16s ease, transform .16s ease;
+}
+.community-unreported-tile:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); transform: translateY(-2px); }
+.community-unreported-art { display: grid; place-items: center; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 9px; background: var(--panel-2); }
+.community-unreported-art img { width: 100%; height: 100%; object-fit: cover; }
+.community-unreported-art i { font-style: normal; font-size: 26px; font-weight: 800; color: var(--dim); }
+.community-unreported-name { font-size: 12.5px; font-weight: 650; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.community-unreported-tag {
+  position: absolute; top: 14px; inset-inline-start: 14px; padding: 3px 7px; border-radius: 6px;
+  font-size: 10px; font-weight: 700; background: var(--accent); color: #0b1204;
+}
+/* The game sheet, before installing: what the community found. */
+.sheet-community {
+  display: grid; gap: 10px; margin-top: 14px; padding: 13px 14px;
+  border: 1px solid var(--stroke); border-radius: 12px; background: var(--panel-2);
+}
+.sheet-community[hidden] { display: none !important; }
+.sheet-community header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sheet-community header b { font-size: 13px; }
+.sheet-community header .ghost { margin-inline-start: auto; }
+.sheet-community-status {
+  padding: 3px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; background: var(--glass); color: var(--dim);
+}
+.sheet-community-status.working { color: #6cc10a; background: rgba(108,193,10,.14); }
+.sheet-community-status.mixed { color: #e39d2b; background: rgba(227,157,43,.14); }
+.sheet-community-status.broken { color: #e5484d; background: rgba(229,72,77,.14); }
+.sheet-community-routes { display: grid; gap: 6px; }
+.sheet-community-route { display: flex; align-items: center; gap: 16px; font-size: 12.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.sheet-community-route > span:first-child { min-width: 88px; color: var(--dim); font-weight: 600; }
+.sheet-community-route i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-inline-end: 6px; }
+.sheet-community-route .g i { background: #6cc10a; }
+.sheet-community-route .y i { background: #e39d2b; }
+.sheet-community-route .r i { background: #e5484d; }
+.sheet-community p { margin: 0; font-size: 12px; color: var(--dim); }
+.community-apis { display: flex; flex-wrap: wrap; gap: 5px; }
+.community-apis i {
+  font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; padding: 3px 7px; border-radius: 6px;
+  background: rgba(10,16,24,.55); border: 1px solid rgba(255,255,255,.16); color: #fff;
 }
 .community-filters label, .community-report-grid label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; }
 .community-filters input, .community-filters select, .community-report-grid select, .community-comment textarea, .community-profile input {

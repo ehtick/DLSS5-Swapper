@@ -63,7 +63,7 @@ test('admin avatar paths become public API URLs in cards and replies', async (t)
 test('the cards page keeps the server total separate from filtered results', async (t) => {
   const { client } = fixture(t, [{ body: { cards: [{ key: 'steam:10' }], total: 1248 } }]);
   assert.deepEqual(await client.cardsPage({ status: 'working' }), {
-    cards: [{ key: 'steam:10' }], total: 1248
+    cards: [{ key: 'steam:10' }], total: 1248, features: []
   });
 });
 
@@ -203,4 +203,23 @@ test('administrator chat messages use the protected routes', async t => {
     ['DELETE', '/v1/admin/chat/messages/4'], ['POST', '/v1/admin/chat/moderate']
   ]);
   assert.ok(calls.every(call => call.options.headers.authorization === `Bearer ${token}`));
+});
+
+// "My games" and the graphics-card filter. The library goes in a POST body,
+// never a URL, and never with the install id: it is a read about this machine.
+test('"My games" is a POST without the install id, and the card filter rides on the query', async (t) => {
+  const { client, calls } = fixture(t, [
+    { body: { cards: [{ key: 'exe:gta5' }], total: 9, features: ['gpu', 'mine'] } },
+    { body: { cards: [], total: 9, features: ['gpu'] } },
+    { body: { gpus: [{ model: 'RTX 5080', reports: 2, games: 2 }] } }
+  ]);
+  const mine = await client.cardsSearch({ gpu: 'RTX 5080', route: 'all' }, ['exe:gta5', 'title:gta']);
+  assert.deepEqual(mine, { cards: [{ key: 'exe:gta5' }], total: 9, features: ['gpu', 'mine'] });
+  assert.equal(calls[0].url, 'https://example.test/v1/cards/search');
+  assert.equal(calls[0].options.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].options.body), { keys: ['exe:gta5', 'title:gta'], gpu: 'RTX 5080' });
+  assert.equal(calls[0].options.headers['x-install'], undefined);
+  await client.cardsPage({ gpu: 'RTX 5080' });
+  assert.equal(calls[1].url, 'https://example.test/v1/cards?gpu=RTX+5080');
+  assert.deepEqual(await client.gpus(), [{ model: 'RTX 5080', reports: 2, games: 2 }]);
 });

@@ -173,3 +173,8 @@
 .chat-nav-unread { min-width:16px; height:16px; display:grid; place-items:center; margin-inline-start:-7px; padding:0 4px; border-radius:999px; background:#ef4c59; color:#fff; font-size:8px; }
 @media (max-width:900px) { .chat-retention{display:none}.chat-game-card{grid-template-columns:94px minmax(0,1fr) 34px}.chat-game-poster{width:68px;height:90px}.chat-room{padding-inline:12px}.chat-composer-wrap{padding-inline:12px} }
 @media (prefers-reduced-motion:reduce) { .chat-room{scroll-behavior:auto}.chat-image img,.chat-react-add,.chat-quick-actions{transition:none} }
+
+/* The message a notification pointed at, lit for a moment when the chat opens on it. */
+@keyframes chat-flash { 0%, 60% { box-shadow: 0 0 0 2px var(--accent), 0 0 24px color-mix(in srgb, var(--accent) 40%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.chat-message.chat-flash { border-radius: 14px; animation: chat-flash 2.6s ease-out; }
+@media (prefers-reduced-motion: reduce) { .chat-message.chat-flash { animation: none; box-shadow: 0 0 0 2px var(--accent); } }

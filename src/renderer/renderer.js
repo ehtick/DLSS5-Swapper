@@ -827,6 +827,32 @@ function jobLog(line) {
 // it files or deletes a report the sheet behind it is out of date.
 window.refreshSheet = dir => { if (sheetGame && sheetGame.dir === dir) openSheet(dir, true); };
 
+// "Before I install": what the community found for this game, in its sheet. It
+// asks by the same keys a report is filed under; an older server, or no
+// connection, leaves the space empty rather than saying something untrue.
+async function fillSheetCommunity(g, dir) {
+  const box = $('sheetCommunity');
+  if (!box) return;
+  const answer = await window.lab.communityForGame(dir).catch(() => null);
+  if (sheetGame !== g || !answer?.ok || !answer.supported || !$('sheetCommunity')) return;
+  const card = answer.card;
+  const routes = card ? ['renodx', 'feeder', 'optiscaler'].filter((route) => card.verdicts?.[route]).map((route) => {
+    const v = card.verdicts[route];
+    const name = route === 'optiscaler' ? 'OptiScaler' : route === 'renodx' ? 'RenoDX' : 'Feeder';
+    return `<div class="sheet-community-route"><span>${esc(name)}</span><span class="g"><i></i>${v.green || 0}</span><span class="y"><i></i>${v.yellow || 0}</span><span class="r"><i></i>${v.red || 0}</span></div>`;
+  }).join('') : '';
+  const status = card ? ({ working: t('communityWorking'), mixed: t('communityMixed'), broken: t('communityBroken') }[card.status] || '') : '';
+  box.innerHTML = card
+    ? `<header><b>${esc(t('sheetCommunityTitle'))}</b>${status ? `<span class="sheet-community-status ${esc(card.status)}">${esc(status)}</span>` : ''}
+         <button class="ghost sm" id="sheetCommunityOpen" type="button">${esc(t('sheetCommunityOpen'))}</button></header>
+       ${routes ? `<div class="sheet-community-routes">${routes}</div>` : ''}
+       <p>${esc(t('sheetCommunityCounts', card.reports || 0, card.comments || 0))}</p>`
+    : `<header><b>${esc(t('sheetCommunityTitle'))}</b></header><p>${esc(t('sheetCommunityNone'))}</p>`;
+  box.hidden = false;
+  const open = $('sheetCommunityOpen');
+  if (open) open.onclick = () => { closeSheet(); show('community'); window.communityUi?.openCard?.(card.key); };
+}
+
 async function openSheet(dir, keepLog = false) {
   if (jobRunning) return;
   const g = state.games.find((x) => x.dir === dir);
@@ -858,6 +884,8 @@ async function openSheet(dir, keepLog = false) {
   const pick = chosenExe(d, dir);
   const inGameDlss = (d.currentDlss && d.currentDlss.version) || null;
   const showExeFact = d.exes.length < 2;
+  // Filled in once the sheet is on screen, so the sheet never waits on the network.
+  queueMicrotask(() => fillSheetCommunity(g, dir));
 
   $('sheet').innerHTML = `
     <div class="hero${hero ? '' : ' empty'}">
@@ -878,6 +906,7 @@ async function openSheet(dir, keepLog = false) {
       ${info && info.summary ? `<p class="summary">${esc(info.summary.slice(0, 260))}${info.summary.length > 260 ? '…' : ''}</p>` : ''}
 
       ${exePicker(d, dir)}
+      <div class="sheet-community" id="sheetCommunity" hidden></div>
       ${installOptions(d, pick, dir)}
 
       <div class="specs">

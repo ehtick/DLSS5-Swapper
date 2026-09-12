@@ -86,7 +86,12 @@ const S = {
     copyFailed: 'Could not copy. Select the text and press Ctrl+C, or try again.',
     historySnapshot: 'Backup record', historyRecovered: 'Interrupted operation recovered',
     historyLoadFailed: 'Could not load history. Reopen this page to try again.',
-    overlaySkipped: (error) => `The in-game overlay was skipped: ${error}. DLSS was installed normally.`,
+    overlaySkipped: (error) => `The in-game overlay will not be installed: ${error}. The rest of the install carries on.`,
+    errNoWriteAccess: 'Windows will not let this app write to the game folder, so nothing was changed. Games installed under Program Files are protected: run DLSS 5 Swapper as administrator, or move the game to another folder.',
+    sheetCommunityTitle: 'What the community found', sheetCommunityOpen: 'Open reports',
+    sheetCommunityNone: 'No community reports for this game yet - after installing, you could be the first.',
+    sheetCommunityCounts: (reports, comments) => `${reports} report${reports === 1 ? '' : 's'} · ${comments} comment${comments === 1 ? '' : 's'}`,
+    communityWorking: 'Working', communityMixed: 'Mixed', communityBroken: 'Not working',
     historySaveWarning: 'History could not be read or saved completely. Available entries are shown; copy them before closing the app and check access to the app data folder.',
     gamesTitle: 'Games', addGame: 'Add a game', addFolder: 'Add a folder', rescan: 'Rescan',
     searchGames: 'Search games', searchGamesHint: 'Search by game title…',
@@ -119,12 +124,12 @@ const S = {
     errMultipassMissing: 'This build does not carry the RenoDX DLSS Tool add-on.',
     multipassConfigured: 'DLSS Tool set to hook on Present, DLSS not required',
     multipassHint: 'The multipass consumer runs the neural pass more than once per frame. It replaces the ordinary one - the two cannot both be loaded, and this install swaps the file for you.',
-    driverFaultTitle: 'Your driver cannot run the neural pass',
+    driverFaultTitle: 'This driver may not run the neural pass',
     driverFaultBody: (names) => `${names}
 
-Drivers 616.64 and newer fault inside NVIDIA's own neural runtime on every evaluate. 616.56 is the last one measured to complete one.
+Drivers 616.64 and newer were measured upstream faulting inside NVIDIA's own neural runtime. Plenty of people run newer drivers without trouble, especially with MSI Afterburner and RivaTuner closed.
 
-The install will work. The neural pass will not appear in game until you roll the driver back.`,
+The install will go through. If the neural pass never appears in game, 616.56 is the last driver known to work.`,
     driverFaultGo: 'Install anyway',
     driverFaultStopped: 'stopped - driver not accepted',
     setTray: 'Keep running in the system tray', setTrayHint: 'Closing the window hides it to the tray instead of quitting. Use Quit in the tray menu to exit.',
@@ -205,7 +210,12 @@ The install will work. The neural pass will not appear in game until you roll th
     copyFailed: 'تعذّر النسخ. حدّد النص واضغط Ctrl+C، أو حاول مرة أخرى.',
     historySnapshot: 'سجل نسخة احتياطية', historyRecovered: 'استعادة عملية متوقفة',
     historyLoadFailed: 'تعذّر تحميل الهستري. أعد فتح الصفحة للمحاولة مرة أخرى.',
-    overlaySkipped: (error) => `تُخطّي الأوفرلاي داخل اللعبة: ${error}. وDLSS رُكّب كالمعتاد.`,
+    overlaySkipped: (error) => `لن يُثبَّت الأوفرلاي داخل اللعبة: ${error}. وبقية التثبيت مستمرة.`,
+    errNoWriteAccess: 'ويندوز لا يسمح للبرنامج بالكتابة في مجلد اللعبة، فلم يتغيّر شيء. الألعاب المثبّتة داخل Program Files محمية: شغّل DLSS 5 Swapper كمسؤول، أو انقل اللعبة إلى مجلد آخر.',
+    sheetCommunityTitle: 'ماذا وجد المجتمع', sheetCommunityOpen: 'افتح التقارير',
+    sheetCommunityNone: 'لا توجد تقارير من المجتمع لهذه اللعبة بعد - بعد التثبيت، يمكنك أن تكون الأول.',
+    sheetCommunityCounts: (reports, comments) => `${reports} تقرير · ${comments} تعليق`,
+    communityWorking: 'تعمل', communityMixed: 'نتائج مختلطة', communityBroken: 'لا تعمل',
     historySaveWarning: 'تعذّرت قراءة أو حفظ الهستري بالكامل. السجلات المتاحة ظاهرة؛ انسخها قبل إغلاق البرنامج وتحقّق من صلاحيات مجلد بيانات التطبيق.',
     gamesTitle: 'الألعاب', addGame: 'أضف لعبة', addFolder: 'أضف مجلداً', rescan: 'إعادة فحص',
     searchGames: 'البحث عن لعبة', searchGamesHint: 'ابحث باسم اللعبة…',
@@ -240,12 +250,12 @@ The install will work. The neural pass will not appear in game until you roll th
     errMultipassMissing: 'هذه النسخة لا تحمل ملحق RenoDX DLSS Tool.',
     multipassConfigured: 'ضُبطت أداة DLSS على الاعتراض عند Present، دون اشتراط DLSS',
     multipassHint: 'المستهلك متعدد التمريرات يشغّل المعالجة العصبية أكثر من مرة في الإطار. وهو يحلّ محلّ العادي — لا يمكن تحميل الاثنين معاً، والتثبيت يبدّل الملف نيابة عنك.',
-    driverFaultTitle: 'تعريفك لا يستطيع تشغيل المعالجة العصبية',
+    driverFaultTitle: 'قد لا يشغّل هذا التعريف المعالجة العصبية',
     driverFaultBody: (names) => `${names}
 
-التعريفات 616.64 وما بعدها تتعطّل داخل منظومة NVIDIA العصبية نفسها في كل عملية، و616.56 آخر إصدار قِيس وهو يكملها.
+رُصد لدى المطوّر الأصلي أن التعريفات 616.64 وما بعدها تتعطّل داخل منظومة NVIDIA العصبية نفسها. لكن كثيرين يشغّلون تعريفات أحدث بلا مشاكل، خصوصًا مع إغلاق MSI Afterburner و RivaTuner.
 
-التثبيت سينجح. لكن المعالجة العصبية لن تظهر في اللعبة حتى تُرجع التعريف.`,
+التثبيت سيكتمل. وإن لم تظهر المعالجة العصبية في اللعبة، فـ616.56 آخر تعريف معروف أنه يعمل.`,
     driverFaultGo: 'ثبّت على أي حال',
     driverFaultStopped: 'أُوقف - لم يُقبل التعريف',
     setTray: 'الإبقاء عليه في شريط النظام', setTrayHint: 'إغلاق النافذة يخفيها في شريط النظام بدل إنهاء البرنامج. استخدم «إنهاء» من قائمة الأيقونة للخروج.',

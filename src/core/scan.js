@@ -357,10 +357,19 @@ function detectEngineApi(file) {
   return null;
 }
 
+// Libraries that mention Direct3D without being a game's renderer: browser
+// engines, shader compilers, the graphics runtimes themselves, and the files
+// this app and the mods it sits beside put there. None of them is evidence
+// that a folder holds a game.
+const NOT_A_RENDERER = /^(?:libglesv2|libegl|libcef|chrome_elf|cef|d3dcompiler_\d+|dxcompiler|dxil|vulkan-1|opengl32|d3d\d+|d3d\d+core|dxgi|ddraw|d3dimm|nvngx.*|sl\..*|amd_.*|ffx_.*|reshade\d*|dlss5.*|dgvoodoo.*|qt\d.*|mono.*|steam_api.*|galaxy.*|eossdk.*|discord.*|gameoverlayrenderer.*|renodx.*)\.dll$/i;
+// Source 2 loads rendersystemdx11.dll itself, and installing into Dota 2 broke
+// it (#199). Its renderer is named so the reason is honest, but never offered.
+const NOT_OFFERED = /^rendersystem/i;
+
 // The graphics evidence a game keeps in one of its own libraries rather than
 // in the executable. Bounded hard: this runs only when a scan already found
 // nothing, and it must not turn that into a long walk.
-function rendererModule(gameDir, budget = 60) {
+function rendererEvidence(gameDir, budget = 60) {
   const queue = [[gameDir, 0]];
   while (queue.length && budget > 0) {
     const [dir, depth] = queue.shift();
@@ -368,11 +377,45 @@ function rendererModule(gameDir, budget = 60) {
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { continue; }
     for (const entry of entries) {
       const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) { if (depth < 3) queue.push([full, depth + 1]); continue; }
-      if (!/\.dll$/i.test(entry.name) || budget-- <= 0) continue;
+      // Prey keeps its renderer four folders down: Binaries/Danielle/x64/Release.
+      if (entry.isDirectory()) { if (depth < 4) queue.push([full, depth + 1]); continue; }
+      if (!/\.dll$/i.test(entry.name) || NOT_A_RENDERER.test(entry.name) || budget-- <= 0) continue;
       try {
-        if (apiFromNames(pe.getImports(full)) || apiFromMarkers(full)) return entry.name;
+        const api = apiFromNames(pe.getImports(full)) || apiFromMarkers(full);
+        if (api) return { file: full, name: entry.name, api: api.api, label: api.label, bitness: pe.getBitness(full) };
       } catch { /* an unreadable module is not evidence */ }
+    }
+  }
+  return null;
+}
+
+function rendererModule(gameDir, budget = 60) {
+  const found = rendererEvidence(gameDir, budget);
+  return found ? found.name : null;
+}
+
+// The same evidence, but only from a library in an executable's own folder and
+// built for the same architecture. A DLL elsewhere in the tree says nothing
+// about which executable it belongs to, and Source 2 is never offered (#199).
+function rendererBeside(exes, budget = 60) {
+  const byDir = new Map();
+  for (const exe of exes) {
+    const dir = path.dirname(exe.path);
+    byDir.set(dir, [...(byDir.get(dir) || []), exe]);
+  }
+  for (const [dir, here] of byDir) {
+    let names = [];
+    try { names = fs.readdirSync(dir); } catch { continue; }
+    for (const name of names) {
+      if (!/\.dll$/i.test(name) || NOT_A_RENDERER.test(name) || NOT_OFFERED.test(name) || budget-- <= 0) continue;
+      const file = path.join(dir, name);
+      let api = null;
+      try { api = apiFromNames(pe.getImports(file)) || apiFromMarkers(file); } catch { continue; }
+      if (!api) continue;
+      const bitness = pe.getBitness(file);
+      const exe = here.filter((item) => item.bitness === bitness)
+        .sort((a, b) => (playableRoleScore(b) - playableRoleScore(a)) || (b.size - a.size))[0];
+      if (exe) return { exe, evidence: { file, name, api: api.api, label: api.label, bitness } };
     }
   }
   return null;
@@ -541,6 +584,25 @@ async function scanGame(gameDir) {
   }
   exeCandidates.length = 0;
   exeCandidates.push(...unique);
+
+  // Prey, Titanfall 2, Call of Duty 2 and Max Payne keep Direct3D out of the
+  // executable altogether: the renderer is a DLL the engine loads by name, so
+  // nothing above names an API and the folder read as having no game in it
+  // (#259, #249). When a library in the executable's own folder names one, at
+  // the same bitness, that executable is offered with that API.
+  if (!exeCandidates.length && undetectedExes.length) {
+    const beside = rendererBeside(undetectedExes);
+    const evidence = beside && beside.evidence;
+    const fitting = beside && beside.exe;
+    if (fitting) {
+      exeCandidates.push({
+        ...fitting, api: evidence.api, apiLabel: evidence.label, via: 'renderer-module:' + evidence.name,
+        dynamic: true, dx12: evidence.label === 'DirectX 12', emulator: null,
+        apiChoices: [{ api: evidence.api, label: evidence.label }]
+      });
+      seenNames.add(fitting.name.toLowerCase());
+    }
+  }
 
   // Executables that named no API at all. Protected builds, script extenders
   // and launchers that start the real engine resolve Direct3D in a way that

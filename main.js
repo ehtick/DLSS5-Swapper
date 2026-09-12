@@ -19,6 +19,8 @@ const { backupRoot, saveActiveManifest, writeTracked, makeReShadeConfigWritable 
 const { scanSource } = require('./src/core/scan.js');
 const pe = require('./src/core/pe.js');
 const { ensureLumenite, ensureDgVoodoo, missingVCRuntime } = require('./src/core/runtime-components.js');
+const communityKeys = require('./src/shared/community-keys');
+const gpuModel = require('./src/shared/gpu-model');
 // A component that downloaded and verified, then vanished before it could be
 // used, is a security tool quarantining it - never the connection. Saying
 // "check your connection" there sends people after the wrong thing.
@@ -616,6 +618,53 @@ ipcMain.handle('community-delete-me', () => communityAnswer(async () => ({
 ipcMain.handle('community-cards', (_event, filters) => communityAnswer(async () => ({
   ...(await community().cardsPage(filters && typeof filters === 'object' ? filters : {}))
 })));
+// The games on this machine as the community would name them: every key a
+// report about each could have been filed under, worked out by the server's
+// own rules from the library and the last scan.
+function libraryForCommunity() {
+  const scans = loadState().scans || {};
+  return lastGames.map((game) => {
+    const scan = scans[keyFor(game.dir)];
+    return {
+      dir: game.dir, title: game.name, poster: game.poster || null,
+      installed: fs.existsSync(path.join(game.dir, '_DLSS5_Backup', 'manifest.json')),
+      keys: communityKeys.keysFor({
+        title: game.name, exe: scan && scan.exe ? path.basename(scan.exe) : null,
+        store: communityKeys.storeOf(game.launcher), storeId: game.storeId
+      })
+    };
+  });
+}
+// "My games" and "My comments": the cards for the games on this machine, or for
+// the games this install reported on - sent as one request of keys.
+ipcMain.handle('community-search', (_event, filters, scope) => communityAnswer(async () => {
+  const input = { limit: 100, ...(filters && typeof filters === 'object' ? filters : {}) };
+  if (scope === 'reports') {
+    const mine = await community().myReports();
+    const keys = [...new Set((mine.reports || []).map((row) => row.card).filter(Boolean))];
+    return { ...(await community().cardsSearch(input, keys)) };
+  }
+  const library = libraryForCommunity();
+  const keys = [...new Set(library.flatMap((game) => game.keys))];
+  return { ...(await community().cardsSearch(input, keys)), library };
+}));
+// The game sheet, before installing: this one game's card, if it has one. An
+// older server answers 404 here, which means "not supported", not "no card".
+ipcMain.handle('community-for-game', (_event, dir) => communityAnswer(async () => {
+  const game = libraryForCommunity().find((row) => keyFor(row.dir) === keyFor(String(dir || '')));
+  if (!game || !game.keys.length) return { supported: true, card: null };
+  let page;
+  try { page = await community().cardsSearch({ limit: 5 }, game.keys); }
+  catch (error) { if (error.status === 404) return { supported: false }; throw error; }
+  const rank = (card) => { const at = game.keys.indexOf(card.key); return at === -1 ? 99 : at; };
+  return { supported: true, card: [...page.cards].sort((a, b) => rank(a) - rank(b))[0] || null };
+}));
+// The graphics cards people reported with, and this machine's own among them.
+ipcMain.handle('community-gpus', () => communityAnswer(async () => {
+  const [gpus, rows] = await Promise.all([community().gpus(), guards.gpuInfo().catch(() => null)]);
+  const mine = Array.isArray(rows) && rows[0] ? gpuModel.normaliseGpu(rows[0].name) : null;
+  return { gpus, mine };
+}));
 ipcMain.handle('community-my-reports', () => communityAnswer(async () => ({
   result: await community().myReports()
 })));
@@ -841,7 +890,7 @@ ipcMain.handle('community-prefill', async (_event, dir) => {
       // out green.
       palette: paletteOfAll(heroFor(dir), game.poster?.url || game.poster || null),
       kicker: kickerFor(dir, game),
-      game: { store, storeId: store && game.id ? String(game.id) : null, title: game.name,
+      game: { store, storeId: store && game.storeId ? game.storeId : null, title: game.name,
         exe: scan.chosen?.rel ? path.basename(scan.chosen.rel) : null },
       route: ['feeder', 'renodx', 'optiscaler'].includes(route) ? route : null,
       api: communityApi(target),
@@ -901,6 +950,30 @@ ipcMain.handle('add-game-path', (_event, dir) => {
 let lastRoots = [];
 let lastGames = [];
 
+// #155: a ReShade.ini left read-only by an install from before 2.2.2 covers the
+// game with an error banner. 2.2.5 cleared it only when the game was opened in
+// this app, and launching from Steam never passes through here - so every game
+// this app installed into is looked at once, in the background, per start.
+let configsRepaired = false;
+function repairReadOnlyConfigs(games) {
+  if (configsRepaired) return;
+  configsRepaired = true;
+  setImmediate(async () => {
+    for (const game of games) {
+      try {
+        const manifest = JSON.parse(fs.readFileSync(path.join(game.dir, '_DLSS5_Backup', 'manifest.json'), 'utf8'));
+        const exe = manifest && manifest.game && manifest.game.exe;
+        if (typeof exe !== 'string' || !exe) continue;
+        const exeDir = path.dirname(path.resolve(game.dir, exe));
+        // Only ever inside the game's own folder, whatever the manifest says.
+        if (!exeDir.toLowerCase().startsWith(path.resolve(game.dir).toLowerCase())) continue;
+        const cleared = await makeReShadeConfigWritable(exeDir);
+        if (cleared.length) console.log('Cleared read-only:', cleared.join(', '), 'in', game.dir);
+      } catch { /* not installed by this app, or unreadable: nothing to repair */ }
+    }
+  });
+}
+
 ipcMain.handle('library', () => {
   const state = loadState();
   const found = discover(
@@ -923,6 +996,9 @@ ipcMain.handle('library', () => {
       launcher: g.launcher,
       // Steam records the app id, so its games never need a name search.
       appid: g.launcher === 'Steam' ? g.id : null,
+      // Every store's own id, for the community report. It was read from
+      // game.id, which this row never had, so no report ever carried one.
+      storeId: g.id ? String(g.id) : null,
       name: g.name,
       dir: g.dir,
       poster: posterUrl(g, state),
@@ -931,6 +1007,7 @@ ipcMain.handle('library', () => {
         ? state.scans[keyFor(g.dir)]
         : null
     }));
+  repairReadOnlyConfigs(lastGames);
   return lastGames;
 });
 
@@ -1665,7 +1742,10 @@ ipcMain.handle('install', (event, dir, exePath, requestedRoute, requestedApi) =>
         return { ok: false, code: 'runtimeRequiredHint' };
       }
     }
-    if (api === 'd3d8' || api === 'd3d9') {
+    // DirectDraw goes through dgVoodoo exactly as DX8 and DX9 do - apply.js
+    // refuses a ddraw install without it - and it was never downloaded for one,
+    // so every DirectDraw install failed with errDgVoodooMissing (#292, #279).
+    if (api === 'd3d8' || api === 'd3d9' || api === 'ddraw') {
       try {
         p.source.feeder.dgVoodooDir = await ensureDgVoodoo(app.getPath('userData'));
         send({ code: 'legacyWrapperReady', params: { api, bitness: target.bitness } });

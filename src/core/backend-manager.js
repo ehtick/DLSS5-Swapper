@@ -75,6 +75,10 @@ function loadProfile(config) {
 }
 async function install(config, log = () => {}) {
   compatibility.assertSafeTarget(config.gameDir, config.exePath);
+  // #301: a game under Program Files cannot be written to without elevation,
+  // and the first write is the backup folder - which failed as a bare EPERM
+  // before anything useful was said. Asked once, up front, in words.
+  if (!core.canWrite(config.gameDir)) throw Object.assign(new Error('errNoWriteAccess'), { code: 'errNoWriteAccess' });
   compatibility.assertAntiCheatConsent(config.gameDir, config.exePath, config.antiCheatAcknowledged);
   const old = readManifest(config.gameDir);
   const changed = old && (old.route !== config.route || old.game.api !== config.api ||

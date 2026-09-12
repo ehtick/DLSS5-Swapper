@@ -1,6 +1,6 @@
 {
   "name": "dlss5-swapper",
-  "version": "2.2.6",
+  "version": "2.2.7",
   "description": "DLSS 5 (Neural Rendering) for your games - a library that finds them, and one click to install",
   "main": "main.js",
   "scripts": {
@@ -95,7 +95,8 @@
       "uninstallerIcon": "build/icon.ico",
       "installerHeaderIcon": "build/icon.ico",
       "deleteAppDataOnUninstall": true,
-      "artifactName": "DLSS5-Swapper-Setup-${version}.exe"
+      "artifactName": "DLSS5-Swapper-Setup-${version}.exe",
+      "include": "build/installer.nsh"
     }
   }
 }

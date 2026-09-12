@@ -43,36 +43,49 @@ Both are on the latest release page, with `SHA256SUMS.txt` beside them.
 - **Rendering API override:** optional, per game, with **Automatic** as the default; detection is never overwritten.
 - **Custom add-ons:** the Add-ons page remains available alongside the integrated installation routes.
 - **Multipass neural rendering:** an installation route that runs the neural pass up to ten times per frame, on DX12, DX11 and 64-bit DX9 - including games with no DLSS of their own.
-- **Community (BETA):** read what worked for other people on the games you own, leave your own report, and talk it over underneath it. Opt-in, and everything you leave can be edited, deleted or withdrawn.
+- **Community (BETA):** read what worked for other people, narrowed to the games on your PC and the graphics card in it, leave your own report, and talk it over underneath it. Opt-in, and everything you leave can be edited, deleted or withdrawn.
 - **Community chat:** one live room for everyone using the app - screenshots, game cards, replies with mentions and reactions.
 
-## New in 2.2.6
+## New in 2.2.7
 
-Community chat, and the fault 2.2.5 shipped in every native install - fixed at the cause.
+Find the reviews that matter to you, hear about it when people answer you - and every fix promised on the tracker.
 
-### 💬 Community chat
+### ✨ New
 
-One live room for everyone using the app, on its own page under **Games**.
+- **Filter by your graphics card.** Pick your card in the Community filter - **My card** is always first - and see only the reviews from people with that same card.
+- **Reviews for your games.** Switch to **My games** and the Community page shows the reviews for the games installed on your PC. Open any game in your library and what the community found is right above Install.
+- **My comments** - everything you reported, in one place.
+- **Sort** by most recent, most reports or A-Z, and every card shows which APIs its reviews used ([#288]).
+- **Notifications** when someone mentions you in the chat, replies to you there, or reacts to your review or your message.
 
-- **Screenshots in the conversation.** Paste, drop or pick up to four images. They are compressed on your machine before they leave it, and they expire after 24 hours. Tag one **DLSS 5 ON** or **DLSS 5 OFF** and a comparison reads without explaining it.
-- **Game cards.** Attach any game from the Community page: its result and its report count travel with the message, and a click opens its reports in place.
-- **Replies with mentions, reactions,** and your own messages to edit or delete. Any image can be saved to disk.
-- **Live.** New messages arrive while you read, an unread count waits on the sidebar while you are elsewhere, and a half-written message survives leaving the page.
-
-It uses the community name you chose in Settings.
-
-### And four things that were wrong
+### 🔧 Fixed
 
 | | |
 |---|---|
-| **Native DLSS (RenoDX) installed the multipass consumer** | The native route's add-on was picked as "the first `.addon64` in the folder", and once the multipass build shipped beside the ordinary one it sorted first. It is chosen by name now, in the app and in the build |
-| **Two RenoDX consumers could sit side by side** | Both register as "RenoDX DLSS"; ReShade keeps whichever loads first and drops the other, so the route you picked stopped deciding what ran. An install now moves any other `renodx-dlss*` add-on beside the game into the backup, and **Restore originals** puts yours back exactly |
-| **A hidden switch could pick multipass on the Feeder route** | Left over from development, with no way to see it or turn it off. It is gone: multipass comes only from its own route |
-| **Community dropdowns were white on white** | In the dark theme the option lists drew white text on a white popup. Every dropdown now takes a solid colour from the theme |
+| **DirectDraw never installed** | dgVoodoo was downloaded only for DX8 and DX9, so every DirectDraw game failed with `errDgVoodooMissing` - Gens and the other emulators included ([#292], [#279], [#150]) |
+| **Prey, Titanfall 2, Call of Duty 2 and Max Payne read as "No 3D executable"** | Their renderer is a DLL beside the executable. A Direct3D library in the executable's own folder is now enough to offer it ([#259], [#249]) |
+| **Portal was filed under Half-Life 2** | Both run `hl2.exe`, and no report ever carried the store id it should have. An executable many games share - `hl2.exe`, every emulator - no longer decides which card a report lands on ([#274]) |
+| **The read-only ReShade.ini banner came back** | 2.2.5 cleared it only when a game was opened in the app. Every game this app installed into is checked once each time it starts ([#155]) |
+| **Games under Program Files failed with `EPERM`** | Windows protects that folder. The install now says so up front, in words: run as administrator, or move the game ([#301]) |
+| **The driver warning read like a wall** | It is a warning: many people run newer drivers without trouble, especially with MSI Afterburner and RivaTuner closed. It says so now ([#300], [#278]) |
+| **"DLSS was installed normally" before it was** | The overlay message appeared before the install finished, even when it then failed ([#275]) |
+| **Uninstalling left ReShade in games** | Uninstalling never touches game folders. The uninstaller now says so and points to **Restore originals** first ([#266]) |
 
-**Installed a game on Native DLSS with 2.2.5?** Press **Install** again on the same route and the wrong file is replaced, or **Restore originals** to undo it entirely.
+[Full 2.2.7 notes →](https://github.com/rakanki911/DLSS5-Swapper/releases/tag/v2.2.7)
 
-[Full 2.2.6 notes →](https://github.com/rakanki911/DLSS5-Swapper/releases/tag/v2.2.6)
+[#150]: https://github.com/rakanki911/DLSS5-Swapper/issues/150
+[#155]: https://github.com/rakanki911/DLSS5-Swapper/issues/155
+[#249]: https://github.com/rakanki911/DLSS5-Swapper/issues/249
+[#259]: https://github.com/rakanki911/DLSS5-Swapper/issues/259
+[#266]: https://github.com/rakanki911/DLSS5-Swapper/issues/266
+[#274]: https://github.com/rakanki911/DLSS5-Swapper/issues/274
+[#275]: https://github.com/rakanki911/DLSS5-Swapper/issues/275
+[#278]: https://github.com/rakanki911/DLSS5-Swapper/issues/278
+[#279]: https://github.com/rakanki911/DLSS5-Swapper/issues/279
+[#288]: https://github.com/rakanki911/DLSS5-Swapper/issues/288
+[#292]: https://github.com/rakanki911/DLSS5-Swapper/issues/292
+[#300]: https://github.com/rakanki911/DLSS5-Swapper/issues/300
+[#301]: https://github.com/rakanki911/DLSS5-Swapper/issues/301
 
 ## Earlier releases
 
@@ -80,6 +93,7 @@ Each one is written up in full - what broke, why, and what was changed.
 
 | | |
 |---|---|
+| **2.2.6** | [Community chat](docs/releases/v2.2.6.md) - one live room for everyone, and the right add-on on every route |
 | **2.2.5** | [Multipass](docs/releases/v2.2.5.md) - the neural pass up to ten times per frame, plus nine faults fixed at the cause |
 | **2.2.4** | [The Community page](docs/releases/v2.2.4.md) - compare notes with everyone else, plus eight faults fixed at the cause |
 | **2.2.3** | [Six reported faults, fixed at the cause](docs/releases/v2.2.3.md) - OptiScaler on older cards, a game's own stale shader compiler, the overlay on a scaled display |

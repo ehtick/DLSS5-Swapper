@@ -127,7 +127,7 @@ class CommunityClient {
 
   async cardsPage(filters = {}) {
     const query = new URLSearchParams();
-    for (const key of ['q', 'route', 'api', 'status', 'limit', 'offset']) {
+    for (const key of ['q', 'route', 'api', 'status', 'gpu', 'sort', 'limit', 'offset']) {
       if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '' && filters[key] !== 'all') {
         query.set(key, String(filters[key]));
       }
@@ -136,7 +136,23 @@ class CommunityClient {
     if (filters.fresh) pathname = this.fresh(pathname);
     const data = (await this.request('GET', pathname)).data;
     this.absolutizeAssets(data);
-    return { cards: data.cards || [], total: Number(data.total) || 0 };
+    return { cards: data.cards || [], total: Number(data.total) || 0, features: Array.isArray(data.features) ? data.features : [] };
+  }
+
+  // "My games" is a POST: a library is too many keys for a URL, and it is
+  // nobody else's business at the edge. It is a read, so no install id goes.
+  async cardsSearch(filters = {}, keys = []) {
+    const body = { keys: keys.slice(0, 1000) };
+    for (const key of ['q', 'route', 'api', 'status', 'gpu', 'sort', 'limit', 'offset']) {
+      if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '' && filters[key] !== 'all') body[key] = filters[key];
+    }
+    const data = (await this.request('POST', '/v1/cards/search', { body })).data;
+    this.absolutizeAssets(data);
+    return { cards: data.cards || [], total: Number(data.total) || 0, features: Array.isArray(data.features) ? data.features : [] };
+  }
+
+  async gpus() {
+    return (await this.request('GET', '/v1/gpus')).data.gpus || [];
   }
 
   // Reads are cached at the edge for fifteen seconds, which is right for
@@ -221,7 +237,8 @@ class CommunityClient {
   async notices() {
     const state = this.load();
     const since = Number(state.noticeCursor) || 0;
-    const { data } = await this.request('GET', `/v1/me/notices?since=${since}`, { write: true });
+    // Reactions and chat notices are sent only to an app that asks for them.
+    const { data } = await this.request('GET', `/v1/me/notices?since=${since}&include=chat,reaction`, { write: true });
     if (data && typeof data.cursor === 'number') { state.noticeCursor = data.cursor; this.save(); }
     if (data && data.me) { state.profile = { ...state.profile, ...data.me }; this.save(); }
     return data;
